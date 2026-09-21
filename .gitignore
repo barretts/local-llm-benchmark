@@ -5,6 +5,8 @@ state/
 .logs/
 workspaces/
 artifacts/
+tmp/
+output/
 .grader-build/
 .patches/
 .staging/
