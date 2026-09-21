@@ -1,0 +1,23 @@
+{
+  "engine": {
+    "path": "F:/local-llm-benchmark-runtime/upstream-5b335f413e4f73b0809c4fe39af894efbcc6a0d2/bin/llama-server.exe",
+    "sha256": "975b3a152fa0132cb18e702a3e1cc055dc158052680689538e8488ea2636e113",
+    "commit": "5b335f413e4f73b0809c4fe39af894efbcc6a0d2"
+  },
+  "profiles": {
+    "qwen": {
+      "label": "Qwen3.6 27B IQ2_M (quality pick)",
+      "path": "F:/models/mradermacher/Qwen3.6-27B-i1-GGUF/Qwen3.6-27B.i1-IQ2_M.gguf",
+      "bytes": 10004592608,
+      "sha256": "0a2fa2d3fc86a49dc69c7ab0306cfc954bca136a3bfa720165fd2c7de429f250",
+      "contexts": [16384, 65536]
+    },
+    "oxcoder": {
+      "label": "OxCoder 9B Q4_K_M (faster pick)",
+      "path": "E:/modelmadness/prithivMLmods--OxCoder-9B-GGUF/d108751ef79e645b07d04030427b6b67b284d07e/OxCoder-9B.Q4_K_M.gguf",
+      "bytes": 5629117536,
+      "sha256": "a171c091c67c3547c45ec58f1b85a888d73725315fde71bc929ff9f8c255bb6f",
+      "contexts": [16384]
+    }
+  }
+}

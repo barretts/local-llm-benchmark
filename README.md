@@ -6,6 +6,8 @@ Read [START_HERE.md](START_HERE.md), [EXECUTION_PLAN.md](EXECUTION_PLAN.md), [FI
 
 ## Source layout
 
+For everyday local serving and Aider, double-click `Local-Models.cmd`. See [the small launcher guide](launcher/README.md) for the local API, model switching and coding client. These practical profiles are separate from benchmark qualification.
+
 - `localbench/`: controller, adapters, measurement, grading, resource collection, reports, acquisition, recovery, and serving.
 - `scripts/`: setup, verification, supervision, and focused experiment controllers.
 - `tests/`: controller and adapter tests, with synthetic measurement data.

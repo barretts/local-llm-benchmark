@@ -1,0 +1,2 @@
+# Installed only into launcher/runtime/aider-env with private Python 3.12.
+aider-chat==0.86.2

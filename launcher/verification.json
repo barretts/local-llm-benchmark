@@ -1,0 +1,50 @@
+{
+  "scope": "Operational integration smoke only. No benchmark qualification or comparative latency measurement.",
+  "verified_date_utc": "2026-09-21",
+  "aider_version": "0.86.2",
+  "aider_python_version": "3.12.13",
+  "engine_commit": "5b335f413e4f73b0809c4fe39af894efbcc6a0d2",
+  "cpu_safety_tests_passed": 21,
+  "isolated_python_image": "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e",
+  "models": {
+    "oxcoder": {
+      "context_tokens": 16384,
+      "api_inference_passed": true,
+      "overflow_http_status": 400,
+      "planted_bug_failed_checks": true,
+      "aider_exit": 0,
+      "isolated_code_checks_passed": true,
+      "grader_unchanged": true,
+      "format_corrections": 0,
+      "gpu_loaded_machine_mib": {
+        "used_mib": 6121,
+        "free_mib": 9989
+      }
+    },
+    "qwen": {
+      "context_tokens": 16384,
+      "api_inference_passed": true,
+      "overflow_http_status": 400,
+      "planted_bug_failed_checks": true,
+      "aider_exit": 0,
+      "isolated_code_checks_passed": true,
+      "grader_unchanged": true,
+      "format_corrections": 1,
+      "gpu_loaded_machine_mib": {
+        "used_mib": 11111,
+        "free_mib": 4999
+      }
+    }
+  },
+  "owned_job_batch_aider_verified": true,
+  "qwen_64k_startup": {
+    "effective_context_tokens": 65536,
+    "short_api_inference_passed": true,
+    "long_input_or_quality_test": false,
+    "gpu_loaded_machine_mib": {
+      "used_mib": 14166,
+      "free_mib": 1944
+    }
+  },
+  "qualifying_benchmark_winner": null
+}
