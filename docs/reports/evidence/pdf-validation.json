@@ -1,0 +1,32 @@
+{
+  "pdf": "C:\\Users\\barrett\\local-llm-benchmark\\output\\pdf\\local-coding-agent-benchmark-report.pdf",
+  "pages": 18,
+  "sha256": "b5cf2505d49759807991bf7c2cb7868397c473a6868d8212b5bc2315ab5a84a0",
+  "attachments": 2,
+  "rendered_pages": 18,
+  "page_characters": [
+    2180,
+    2302,
+    2204,
+    2241,
+    1865,
+    2172,
+    2228,
+    2056,
+    2333,
+    2346,
+    2687,
+    2691,
+    2142,
+    2646,
+    1756,
+    1813,
+    1809,
+    1701
+  ],
+  "visual_review_passed": true,
+  "independent_original_audit_passed": true,
+  "independent_focused_audit_passed": true,
+  "body_bounds_passed": true,
+  "final_pdf_sha256": "b5cf2505d49759807991bf7c2cb7868397c473a6868d8212b5bc2315ab5a84a0"
+}
