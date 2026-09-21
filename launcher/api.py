@@ -381,6 +381,8 @@ def run_aider(repo, profile, context, port, files=(), message=None, yes=False, n
         raise ValueError("choose an existing coding folder")
     saved = start(profile, context, port)
     command, environment = aider_command(repo, saved, files, message, yes, no_git)
+    print(f"Aider backend: {saved['label']} ({saved['context']} tokens)", flush=True)
+    print(f"API: {saved['api_base']} | Aider model alias: openai/{ALIAS}", flush=True)
     print("Aider will edit files you add. Automatic Git commits are disabled.", flush=True)
     return subprocess.run(command, cwd=repo, env=environment).returncode
 
@@ -431,7 +433,9 @@ def main():
         if name == "_serve":
             command.add_argument("--session", required=True)
         if name == "aider":
-            command.add_argument("--repo", required=True)
+            repo_choice = command.add_mutually_exclusive_group(required=True)
+            repo_choice.add_argument("--repo")
+            repo_choice.add_argument("--prompt-repo", action="store_true", help="ask for the coding folder")
             command.add_argument("--message")
             command.add_argument("--yes", action="store_true", help="accept confirmations; use only for controlled batch tasks")
             command.add_argument("--file", action="append", default=[], help="file to add to Aider (repeatable)")
@@ -453,6 +457,10 @@ def main():
         elif args.command == "menu":
             return menu()
         elif args.command == "aider":
+            if args.prompt_repo:
+                args.repo = input("Coding folder (full path): ").strip().strip('"')
+                if not args.repo:
+                    raise ValueError("a coding folder is required")
             return run_aider(args.repo, args.profile, args.context, args.port, args.file, args.message, args.yes, args.no_git)
         return 0
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:

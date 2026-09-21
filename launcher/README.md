@@ -8,6 +8,8 @@ You can also drag a coding folder onto **Aider.cmd**; that starts Qwen at 16K an
 
 ## API
 
+Double-click **Aider.cmd** to enter a coding folder and open Aider directly. From your coding folder, run `C:\Users\barrett\local-llm-benchmark\aider-local.cmd` to use the current directory. Bare `aider` runs your separate global installation and does not use this launcher's settings. Aider displays `openai/local-coder`, the API alias; the launcher prints the actual Qwen/OxCoder backend before opening it.
+
 | Setting | Value |
 | --- | --- |
 | OpenAI-compatible base URL | `http://127.0.0.1:8080/v1` |
