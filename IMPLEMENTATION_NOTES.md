@@ -1,0 +1,3 @@
+The benchmark documents and JSON remain the authority for agent tools, grading, jobs, budgets, and phases. AgentThreader is used for architectural guidance on atomic checkpoints, resource locks, verification authority, and bounded retries. Its generic worker/healer CLI and sentinel protocols are not substituted for the specified local model tool interface. The skill's referenced preflight schema is absent from the installed skill bundle. No removed Expert/router skills are used.
+
+Controller tests never execute fixture source on the host. Fixture gold and buggy implementations are executed only in the specified CPU Docker grader. Runtime probes and downloads remain gated on harness verification, and the durable execution clock begins at the first such operation.

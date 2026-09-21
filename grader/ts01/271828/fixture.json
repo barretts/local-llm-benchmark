@@ -1,0 +1,63 @@
+{
+  "language": "typescript",
+  "source": {
+    "src/cache.ts": "export class AsyncTTLCache<V> {\n  private entries = new Map<string, {promise: Promise<V>; expiresAt: number}>();\n  constructor(private loader: (key: string) => Promise<V>, private ttlMs: number,\n              private now: () => number) {\n    if (!Number.isFinite(ttlMs) || ttlMs <= 0) throw new RangeError(\"ttlMs\");\n  }\n  get(key: string): Promise<V> {\n    const existing = this.entries.get(key);\n    const start = this.now();\n    if (existing && start < existing.expiresAt) return existing.promise;\n    const promise = Promise.resolve().then(() => this.loader(key));\n    this.entries.set(key, {promise, expiresAt: start + this.ttlMs});\n    return promise;\n  }\n  invalidate(key: string): void { this.entries.delete(key); }\n}\n"
+  },
+  "gold": {
+    "src/cache.ts": "export class AsyncTTLCache<V> {\n  private resolved = new Map<string, {value: V; expiresAt: number}>();\n  private pending = new Map<string, Promise<V>>();\n  private generations = new Map<string, number>();\n  constructor(private loader: (key: string) => Promise<V>, private ttlMs: number,\n              private now: () => number) {\n    if (!Number.isFinite(ttlMs) || ttlMs <= 0) throw new RangeError(\"ttlMs\");\n  }\n  get(key: string): Promise<V> {\n    const entry = this.resolved.get(key);\n    if (entry && this.now() < entry.expiresAt) return Promise.resolve(entry.value);\n    this.resolved.delete(key);\n    const active = this.pending.get(key);\n    if (active) return active;\n    const generation = this.generations.get(key) ?? 0;\n    const request: Promise<V> = Promise.resolve().then(() => this.loader(key)).then(\n      value => {\n        if ((this.generations.get(key) ?? 0) === generation && this.pending.get(key) === request) {\n          this.pending.delete(key);\n          this.resolved.set(key, {value, expiresAt: this.now() + this.ttlMs});\n        }\n        return value;\n      },\n      error => {\n        if (this.pending.get(key) === request) this.pending.delete(key);\n        throw error;\n      }\n    );\n    this.pending.set(key, request);\n    return request;\n  }\n  invalidate(key: string): void {\n    this.generations.set(key, (this.generations.get(key) ?? 0) + 1);\n    this.resolved.delete(key);\n    this.pending.delete(key);\n  }\n}\n"
+  },
+  "public_tests": {
+    "test_public.cjs": "'use strict';\nconst test = require('node:test');\nconst assert = require('node:assert/strict');\nconst subject = require('/workspace/.build/cache.js');\nconst CASES = {\"ttl\":53,\"keys\":[\"key-271828-0\",\"key-271828-1\",\"key-271828-2\",\"key-271828-3\"],\"values\":[654,994,-688,861]};\nfunction deferred() {\n  let resolve, reject;\n  const promise = new Promise((yes, no) => { resolve = yes; reject = no; });\n  return {promise, resolve, reject};\n}\nasync function tick() { for (let i = 0; i < 6; i++) await Promise.resolve(); }\nconst {AsyncTTLCache} = subject;\ntest('a rejected load is retried', async () => {\n  let calls = 0;\n  const failure = new Error('loader failure');\n  const cache = new AsyncTTLCache(async () => { if (++calls === 1) throw failure; return 17; }, 10, () => 0);\n  await assert.rejects(cache.get('a'), error => error === failure);\n  assert.equal(await cache.get('a'), 17);\n  assert.equal(calls, 2);\n});\ntest('a slow load receives its full resolution-time TTL', async () => {\n  let now = 0, calls = 0;\n  const d = deferred();\n  const cache = new AsyncTTLCache(() => { calls++; return calls === 1 ? d.promise : Promise.resolve(99); }, 10, () => now);\n  const first = cache.get('a'); await tick(); now = 20; d.resolve(7);\n  assert.equal(await first, 7); now = 29;\n  assert.equal(await cache.get('a'), 7);\n  assert.equal(calls, 1);\n});\n"
+  },
+  "hidden_tests": {
+    "test_hidden.cjs": "'use strict';\nconst test = require('node:test');\nconst assert = require('node:assert/strict');\nconst subject = require('/workspace/.build/cache.js');\nconst CASES = {\"ttl\":53,\"keys\":[\"key-271828-0\",\"key-271828-1\",\"key-271828-2\",\"key-271828-3\"],\"values\":[654,994,-688,861]};\nfunction deferred() {\n  let resolve, reject;\n  const promise = new Promise((yes, no) => { resolve = yes; reject = no; });\n  return {promise, resolve, reject};\n}\nasync function tick() { for (let i = 0; i < 6; i++) await Promise.resolve(); }\nconst {AsyncTTLCache} = subject;\ntest('concurrent calls coalesce until resolution and values are reused', async () => {\n  const d = deferred(); let calls = 0;\n  const cache = new AsyncTTLCache(() => { calls++; return d.promise; }, CASES.ttl, () => 0);\n  const waiters = Array.from({length: 12}, () => cache.get(CASES.keys[0]));\n  await tick(); assert.equal(calls, 1); d.resolve(CASES.values[0]);\n  assert.deepEqual(await Promise.all(waiters), Array(12).fill(CASES.values[0]));\n  assert.equal(await cache.get(CASES.keys[0]), CASES.values[0]); assert.equal(calls, 1);\n});\ntest('exact resolution deadline expires', async () => {\n  let now = 0, calls = 0;\n  const cache = new AsyncTTLCache(async () => ++calls, CASES.ttl, () => now);\n  assert.equal(await cache.get('a'), 1); now = CASES.ttl - 1;\n  assert.equal(await cache.get('a'), 1); now = CASES.ttl;\n  assert.equal(await cache.get('a'), 2);\n});\ntest('failed pending load is removed, including coalesced rejection', async () => {\n  let calls = 0; const d = deferred(), failure = new Error('seeded failure');\n  const cache = new AsyncTTLCache(() => ++calls === 1 ? d.promise : Promise.resolve(CASES.values[1]), CASES.ttl, () => 0);\n  const a = cache.get('a'), b = cache.get('a');\n  const errors = Promise.allSettled([a, b]); await tick(); d.reject(failure);\n  assert.deepEqual((await errors).map(x => x.reason), [failure, failure]);\n  assert.equal(await cache.get('a'), CASES.values[1]); assert.equal(calls, 2);\n});\ntest('keys have independent pending loads and expiries', async () => {\n  let now = 0; const calls = new Map();\n  const cache = new AsyncTTLCache(async key => { calls.set(key, (calls.get(key) || 0) + 1); return key; }, CASES.ttl, () => now);\n  assert.deepEqual(await Promise.all(CASES.keys.map(key => cache.get(key))), CASES.keys);\n  cache.invalidate(CASES.keys[1]); assert.equal(await cache.get(CASES.keys[1]), CASES.keys[1]);\n  assert.equal(await cache.get(CASES.keys[0]), CASES.keys[0]);\n  assert.equal(calls.get(CASES.keys[0]), 1); assert.equal(calls.get(CASES.keys[1]), 2);\n});\ntest('invalidated stale loads cannot overwrite newer out-of-order resolutions', async () => {\n  const old = deferred(), fresh = deferred(); let calls = 0;\n  const cache = new AsyncTTLCache(() => ++calls === 1 ? old.promise : fresh.promise, CASES.ttl, () => 0);\n  const oldWaiter = cache.get('x'); await tick(); cache.invalidate('x');\n  const newWaiter = cache.get('x'); await tick(); fresh.resolve(22);\n  assert.equal(await newWaiter, 22); old.resolve(11); assert.equal(await oldWaiter, 11);\n  assert.equal(await cache.get('x'), 22); assert.equal(calls, 2);\n});\ntest('repeated invalidation excludes stale values without rejecting waiters', async () => {\n  const pending = [deferred(), deferred(), deferred()]; let calls = 0;\n  const cache = new AsyncTTLCache(() => pending[calls++].promise, CASES.ttl, () => 0);\n  const a = cache.get('x'); await tick(); cache.invalidate('x'); cache.invalidate('x');\n  const b = cache.get('x'); await tick(); cache.invalidate('x');\n  pending[0].resolve(1); pending[1].resolve(2); assert.deepEqual(await Promise.all([a, b]), [1, 2]);\n  const c = cache.get('x'); await tick(); pending[2].resolve(3);\n  assert.equal(await c, 3); assert.equal(calls, 3);\n});\ntest('TTL rejects nonpositive and nonfinite values', () => {\n  for (const ttl of [0, -1, NaN, Infinity, -Infinity])\n    assert.throws(() => new AsyncTTLCache(async () => 1, ttl, () => 0), Error);\n});\ntest('seeded slow resolutions retain full TTL on all keys', async () => {\n  for (let i = 0; i < CASES.keys.length; i++) {\n    let now = 0, calls = 0; const d = deferred();\n    const cache = new AsyncTTLCache(() => ++calls === 1 ? d.promise : Promise.resolve(-99999), CASES.ttl, () => now);\n    const p = cache.get(CASES.keys[i]); await tick(); now = CASES.ttl * 3;\n    d.resolve(CASES.values[i]); await p; now += CASES.ttl - 1;\n    assert.equal(await cache.get(CASES.keys[i]), CASES.values[i]); assert.equal(calls, 1);\n  }\n});\n"
+  },
+  "public_count": 2,
+  "hidden_count": 8,
+  "contract": "Repair src/cache.ts. Preserve exported AsyncTTLCache<V>, constructor(loader:\n(key:string)=>Promise<V>, ttlMs:number, now:()=>number), get(key):Promise<V>\nand invalidate(key):void. TTL must be finite >0. Concurrent gets for one key\ncoalesce. TTL starts on resolution and expires at now >= resolution + ttlMs.\nFailed loads are never cached. Invalidation permits existing waiters to\nresolve but their stale load cannot populate the cache; a later get starts\na new load. Keys are independent. No generic value cloning is required.\n",
+  "cases": {
+    "ttl": 53,
+    "keys": [
+      "key-271828-0",
+      "key-271828-1",
+      "key-271828-2",
+      "key-271828-3"
+    ],
+    "values": [
+      654,
+      994,
+      -688,
+      861
+    ]
+  },
+  "writable": [
+    "src/cache.ts"
+  ],
+  "readonly": [],
+  "oracle": {
+    "cases": {
+      "ttl": 53,
+      "keys": [
+        "key-271828-0",
+        "key-271828-1",
+        "key-271828-2",
+        "key-271828-3"
+      ],
+      "values": [
+        654,
+        994,
+        -688,
+        861
+      ]
+    },
+    "public_count": 2,
+    "hidden_count": 8
+  },
+  "allowed_tools": [
+    "list_files",
+    "read_file",
+    "write_file",
+    "apply_patch",
+    "run_tests"
+  ]
+}

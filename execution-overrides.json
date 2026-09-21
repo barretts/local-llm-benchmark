@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "user_instruction": "use E:\\modelmadness for downloads it has a bunch of space",
+  "paths": { "new_model_root": "E:\\modelmadness" },
+  "limits": { "minimum_free_e_bytes": 68719476736 }
+}

@@ -1,0 +1,7 @@
+Repair src/edit.ts, preserving Edit {start:number;end:number;text:string}
+and applyEdits(text,readonly edits):string. Offsets are UTF-16 code units
+in the ORIGINAL string. Bounds must be integers 0<=start<=end<=length and
+cannot split an astral surrogate pair. Sort a fresh copy; reject overlaps
+and equal starts, including duplicate inserts. Adjacent edits and an
+insertion at another edit's end are valid. Apply simultaneously, preserve
+untouched CRLF/Unicode exactly, and never mutate edit objects/array.

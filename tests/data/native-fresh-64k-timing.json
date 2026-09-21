@@ -1,0 +1,33 @@
+{
+  "kind": "timing",
+  "mode": "fresh",
+  "replicate": 0,
+  "valid": true,
+  "passed": true,
+  "token_evidence": {
+    "cache_isolation_verified": true,
+    "cached_tokens": 0,
+    "context_shift": false,
+    "controlled_prefix_experiment_verified": false,
+    "effective_context_tokens": 65536,
+    "evaluated_tokens": null,
+    "expected_prompt_tokens": 61440,
+    "observed_prefix_cache_hit": false,
+    "prefix_reuse_verified": false,
+    "prompt_tokens": 61440,
+    "tokenization_provenance": {
+      "count": 61440,
+      "provenance": "owned-server /apply-template + /tokenize add_special=true parse_special=true",
+      "template_sha256": "b8ffdb686e3067a26e76ab58fea2a7030a316cebacc17b88ec83be11d7bf5200",
+      "tokenizer_engine_sha256": "975b3a152fa0132cb18e702a3e1cc055dc158052680689538e8488ea2636e113"
+    },
+    "tokenization_verified": true,
+    "truncated": false
+  },
+  "metrics": {
+    "first_action_valid": true,
+    "first_action_seconds": 39.5480997,
+    "prompt_tokens": 61440,
+    "cached_tokens": 0
+  }
+}

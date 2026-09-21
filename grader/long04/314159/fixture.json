@@ -1,0 +1,88 @@
+{
+  "language": "typescript",
+  "source": {
+    "src/request.ts": "import {TimeoutError} from \"./errors\";\nexport interface Response { status: number; body: string; }\nexport type Transport = (request: {url: string; method: \"GET\" | \"POST\"; headers: Record<string,string>}) => Promise<Response>;\nexport interface Options {\n  method: \"GET\" | \"POST\"; maxAttempts: number; baseDelayMs: number;\n  sleep: (ms: number) => Promise<void>; idempotencyKey?: string;\n}\nfunction validate(options: Readonly<Options>): void {\n  if (!Number.isInteger(options.maxAttempts) || options.maxAttempts < 1 ||\n      !Number.isFinite(options.baseDelayMs) || options.baseDelayMs < 0) throw new RangeError(\"retry options\");\n}\nexport async function requestWithRetry(transport: Transport, url: string, options: Readonly<Options>): Promise<Response> {\n  validate(options);\n  let lastResponse: Response | undefined, lastError: unknown;\n  for (let attempt=0; attempt<options.maxAttempts; attempt++) {\n    try {\n      const response = await transport({url,method:options.method,headers:{}});\n      if (response.status !== 429 && response.status !== 503) return response;\n      lastResponse = response; lastError = undefined;\n    } catch (error) { lastError = error; lastResponse = undefined; }\n    await options.sleep(options.baseDelayMs * 2 ** attempt);\n  }\n  if (lastResponse) return lastResponse;\n  throw lastError;\n}\n",
+    "src/errors.ts": "export class TimeoutError extends Error {\n  constructor(message: string = \"timeout\") { super(message); this.name = \"TimeoutError\"; }\n}\n"
+  },
+  "gold": {
+    "src/request.ts": "import {TimeoutError} from \"./errors\";\nexport interface Response { status: number; body: string; }\nexport type Transport = (request: {url: string; method: \"GET\" | \"POST\"; headers: Record<string,string>}) => Promise<Response>;\nexport interface Options {\n  method: \"GET\" | \"POST\"; maxAttempts: number; baseDelayMs: number;\n  sleep: (ms: number) => Promise<void>; idempotencyKey?: string;\n}\nfunction validate(options: Readonly<Options>): void {\n  if (!Number.isInteger(options.maxAttempts) || options.maxAttempts < 1 ||\n      !Number.isFinite(options.baseDelayMs) || options.baseDelayMs < 0) throw new RangeError(\"retry options\");\n}\nexport async function requestWithRetry(transport: Transport, url: string, options: Readonly<Options>): Promise<Response> {\n  validate(options);\n  const key = options.idempotencyKey;\n  const keyedPost = options.method === \"POST\" && key !== undefined && key.trim().length > 0;\n  const retryAllowed = options.method === \"GET\" || keyedPost;\n  const attempts = retryAllowed ? options.maxAttempts : 1;\n  for (let attempt=0; attempt<attempts; attempt++) {\n    const headers: Record<string,string> = {};\n    if (keyedPost) headers[\"Idempotency-Key\"] = key!;\n    let response: Response;\n    try { response = await transport({url,method:options.method,headers}); }\n    catch (error) {\n      if (!(error instanceof TimeoutError) || attempt === attempts - 1) throw error;\n      await options.sleep(options.baseDelayMs * 2 ** attempt);\n      continue;\n    }\n    if ((response.status !== 429 && response.status !== 503) || attempt === attempts - 1) return response;\n    await options.sleep(options.baseDelayMs * 2 ** attempt);\n  }\n  throw new Error(\"unreachable\");\n}\n",
+    "src/errors.ts": "export class TimeoutError extends Error {\n  constructor(message: string = \"timeout\") { super(message); this.name = \"TimeoutError\"; }\n}\n"
+  },
+  "public_tests": {
+    "test_public.cjs": "'use strict';\nconst test = require('node:test');\nconst assert = require('node:assert/strict');\nconst subject = require('/workspace/.build/request.js');\nconst CASES = {\"delay\":6,\"url\":\"/tenant-314159/events\",\"key\":\"  event-key-314159-5501  \",\"statuses\":[503,429,429,200],\"body\":\"response-84788\"};\nconst {requestWithRetry} = subject;\nconst {TimeoutError} = require('/workspace/.build/errors.js');\nfunction options(overrides={}) { const delays=[]; return {delays,value:{method:'GET',maxAttempts:3,baseDelayMs:5,sleep:async ms=>{delays.push(ms);},...overrides}}; }\ntest('unsafe POST is attempted once with no delay', async () => {\n  let calls=0; const final={status:503,body:'busy'}; const o=options({method:'POST'});\n  assert.equal(await requestWithRetry(async()=>{calls++;return final;},'/x',o.value),final);\n  assert.equal(calls,1); assert.deepEqual(o.delays,[]);\n});\ntest('ordinary errors propagate immediately with no final sleep', async () => {\n  let calls=0;const failure=new Error('ordinary');const o=options();\n  await assert.rejects(requestWithRetry(async()=>{calls++;throw failure;},'/x',o.value),error=>error===failure);\n  assert.equal(calls,1);assert.deepEqual(o.delays,[]);\n});\n"
+  },
+  "hidden_tests": {
+    "test_hidden.cjs": "'use strict';\nconst test = require('node:test');\nconst assert = require('node:assert/strict');\nconst subject = require('/workspace/.build/request.js');\nconst CASES = {\"delay\":6,\"url\":\"/tenant-314159/events\",\"key\":\"  event-key-314159-5501  \",\"statuses\":[503,429,429,200],\"body\":\"response-84788\"};\nconst {requestWithRetry} = subject;\nconst {TimeoutError} = require('/workspace/.build/errors.js');\nfunction options(overrides={}) { const delays=[]; return {delays,value:{method:'GET',maxAttempts:3,baseDelayMs:5,sleep:async ms=>{delays.push(ms);},...overrides}}; }\ntest('GET retries only 429 and 503 with exact exponential pre-retry delays', async () => {\n  const o=options({maxAttempts:4,baseDelayMs:CASES.delay});let calls=0;\n  const responses=CASES.statuses.map(status=>({status,body:CASES.body}));\n  assert.equal(await requestWithRetry(async()=>responses[calls++],CASES.url,o.value),responses[3]);\n  assert.equal(calls,4);assert.deepEqual(o.delays,[CASES.delay,CASES.delay*2,CASES.delay*4]);\n});\ntest('POST nonempty key is preserved on every fresh request and header object', async () => {\n  const o=options({method:'POST',idempotencyKey:CASES.key});const requests=[],headers=[];\n  const final={status:200,body:'ok'};\n  const result=await requestWithRetry(async request=>{\n    requests.push(request);headers.push(request.headers);\n    assert.equal(request.url,CASES.url);assert.equal(request.method,'POST');\n    assert.deepEqual(request.headers,{'Idempotency-Key':CASES.key});\n    request.headers.changed='in transport';\n    return requests.length<3?{status:503,body:'busy'}:final;\n  },CASES.url,o.value);\n  assert.equal(result,final);assert.equal(new Set(requests).size,3);assert.equal(new Set(headers).size,3);\n  assert.deepEqual(o.delays,[5,10]);assert.equal(o.value.idempotencyKey,CASES.key);\n});\ntest('empty missing and whitespace-only POST keys disable every retry', async () => {\n  for (const key of [undefined,'',' \\t\\n ']) {\n    let calls=0;const o=options({method:'POST',idempotencyKey:key});const failure=new TimeoutError('unsafe');\n    await assert.rejects(requestWithRetry(async request=>{calls++;assert.deepEqual(request.headers,{});throw failure;},'/x',o.value),error=>error===failure);\n    assert.equal(calls,1);assert.deepEqual(o.delays,[]);\n  }\n});\ntest('final retryable response returns unchanged and never sleeps after last attempt', async () => {\n  for (const status of [429,503]) for (const maxAttempts of [1,3]) {\n    let calls=0;const final={status,body:'same object'};const o=options({maxAttempts});\n    assert.equal(await requestWithRetry(async()=>{calls++;return final;},'/x',o.value),final);\n    assert.equal(calls,maxAttempts);assert.deepEqual(o.delays,maxAttempts===1?[]:[5,10]);\n  }\n});\ntest('TimeoutError retries and final object propagates with no final delay', async () => {\n  const failures=[new TimeoutError('first'),new TimeoutError('second'),new TimeoutError('last')];\n  let calls=0;const o=options();\n  await assert.rejects(requestWithRetry(async()=>{throw failures[calls++];},'/x',o.value),error=>error===failures[2]);\n  assert.equal(calls,3);assert.deepEqual(o.delays,[5,10]);\n});\ntest('nonretryable HTTP statuses and thrown errors are immediate', async () => {\n  for (const status of [200,201,400,404,500,502]) {\n    let calls=0;const response={status,body:'unchanged'};const o=options();\n    assert.equal(await requestWithRetry(async()=>{calls++;return response;},'/x',o.value),response);\n    assert.equal(calls,1);assert.deepEqual(o.delays,[]);\n  }\n  let calls=0;const failure=new TypeError('wrong');const o=options();\n  await assert.rejects(requestWithRetry(async()=>{calls++;throw failure;},'/x',o.value),error=>error===failure);\n  assert.equal(calls,1);assert.deepEqual(o.delays,[]);\n});\ntest('strict numeric options reject invalid values before transport or sleep', async () => {\n  for (const bad of [{maxAttempts:0},{maxAttempts:-1},{maxAttempts:1.5},{maxAttempts:NaN},{maxAttempts:Infinity},\n    {baseDelayMs:-1},{baseDelayMs:NaN},{baseDelayMs:Infinity}]) {\n    let calls=0;const o=options(bad);await assert.rejects(requestWithRetry(async()=>{calls++;return {status:200,body:''};},'/x',o.value),Error);\n    assert.equal(calls,0);assert.deepEqual(o.delays,[]);\n  }\n});\ntest('zero delay is valid and frozen options never change', async () => {\n  const o=options({baseDelayMs:0,method:'POST',idempotencyKey:CASES.key});const frozen=Object.freeze(o.value);let calls=0;\n  const before={...frozen};await requestWithRetry(async()=>({status:++calls<3?429:200,body:''}),'/x',frozen);\n  assert.deepEqual(o.delays,[0,0]);assert.deepEqual(frozen,before);\n});\ntest('sleeper failure propagates without another transport attempt', async () => {\n  let calls=0;const failure=new Error('sleep');const o=options({sleep:async()=>{throw failure;}});\n  await assert.rejects(requestWithRetry(async()=>{calls++;return {status:503,body:''};},'/x',o.value),error=>error===failure);\n  assert.equal(calls,1);\n});\ntest('controlled deferred transport waits before retrying', async () => {\n  let resolve;const pending=new Promise(yes=>{resolve=yes;});let calls=0;const o=options();const final={status:200,body:'done'};\n  const operation=requestWithRetry(()=>{calls++;return calls===1?pending:Promise.resolve(final);},'/x',o.value);\n  for(let i=0;i<5;i++)await Promise.resolve();assert.equal(calls,1);assert.deepEqual(o.delays,[]);\n  resolve({status:429,body:''});assert.equal(await operation,final);assert.equal(calls,2);assert.deepEqual(o.delays,[5]);\n});\n"
+  },
+  "public_count": 2,
+  "hidden_count": 10,
+  "contract": "Repair ONLY src/request.ts in one final write_file with complete source.\nPreserve requestWithRetry(transport,url,options):Promise<Response> and\nexported Response {status:number;body:string}, Transport taking\n{url:string;method:\"GET\"|\"POST\";headers:Record<string,string>}, Options\n{method:\"GET\"|\"POST\";maxAttempts:number;baseDelayMs:number;\nsleep:(ms:number)=>Promise<void>;idempotencyKey?:string}.\nsrc/errors.ts exports TimeoutError and is a READ-ONLY dependency.\nActive signed early contract: maxAttempts positive integer; baseDelayMs\nfinite >=0. Validate before transport, including unsafe POST.\nActive signed middle policy: retry only GET or POST with a nonempty\nidempotencyKey; whitespace-only is empty. POST with a valid key sends\nIdempotency-Key on EVERY attempt, exactly as supplied without trimming.\nActive signed late policy: retry only HTTP 429/503 or TimeoutError; other\nthrown errors propagate immediately. Sleep before the next attempt with\nbaseDelayMs*2**failure_index (first failure index 0), never after last.\nReturn final HTTP response unchanged, including final 429/503. Propagate\nthe final TimeoutError object. Unsafe POST uses one attempt. Each attempt\ngets fresh request/header objects with same URL/method. Mutate no options.\nActive contracts outrank explicitly obsolete/example/unrelated material.\n\nThe three ACTIVE SIGNED documents outrank all explicitly obsolete, example and unrelated material. Exactly one final write_file action, no read/test turns, at most 4096 generated tokens.",
+  "cases": {
+    "delay": 6,
+    "url": "/tenant-314159/events",
+    "key": "  event-key-314159-5501  ",
+    "statuses": [
+      503,
+      429,
+      429,
+      200
+    ],
+    "body": "response-84788"
+  },
+  "writable": [
+    "src/request.ts"
+  ],
+  "readonly": [
+    "src/errors.ts"
+  ],
+  "oracle": {
+    "cases": {
+      "delay": 6,
+      "url": "/tenant-314159/events",
+      "key": "  event-key-314159-5501  ",
+      "statuses": [
+        503,
+        429,
+        429,
+        200
+      ],
+      "body": "response-84788"
+    },
+    "public_count": 2,
+    "hidden_count": 10
+  },
+  "permitted_final_action": "write_file",
+  "allowed_tools": [
+    "write_file"
+  ],
+  "documents": [
+    {
+      "id": "long04-314159-early-301708",
+      "region": "early",
+      "target_fraction": 0.05,
+      "authority": "active",
+      "text": "ACTIVE SIGNED CONTRACT: requestWithRetry(transport,url,options)->Promise<Response>. maxAttempts positive integer; baseDelayMs finite>=0. Preserve full exported types below. Validate before transport."
+    },
+    {
+      "id": "long04-314159-middle-388100",
+      "region": "middle",
+      "target_fraction": 0.5,
+      "authority": "active",
+      "text": "ACTIVE SIGNED CALLER AND SOURCE:\nFILE src/request.ts\nimport {TimeoutError} from \"./errors\";\nexport interface Response { status: number; body: string; }\nexport type Transport = (request: {url: string; method: \"GET\" | \"POST\"; headers: Record<string,string>}) => Promise<Response>;\nexport interface Options {\n  method: \"GET\" | \"POST\"; maxAttempts: number; baseDelayMs: number;\n  sleep: (ms: number) => Promise<void>; idempotencyKey?: string;\n}\nfunction validate(options: Readonly<Options>): void {\n  if (!Number.isInteger(options.maxAttempts) || options.maxAttempts < 1 ||\n      !Number.isFinite(options.baseDelayMs) || options.baseDelayMs < 0) throw new RangeError(\"retry options\");\n}\nexport async function requestWithRetry(transport: Transport, url: string, options: Readonly<Options>): Promise<Response> {\n  validate(options);\n  let lastResponse: Response | undefined, lastError: unknown;\n  for (let attempt=0; attempt<options.maxAttempts; attempt++) {\n    try {\n      const response = await transport({url,method:options.method,headers:{}});\n      if (response.status !== 429 && response.status !== 503) return response;\n      lastResponse = response; lastError = undefined;\n    } catch (error) { lastError = error; lastResponse = undefined; }\n    await options.sleep(options.baseDelayMs * 2 ** attempt);\n  }\n  if (lastResponse) return lastResponse;\n  throw lastError;\n}\n\nFILE src/errors.ts\nexport class TimeoutError extends Error {\n  constructor(message: string = \"timeout\") { super(message); this.name = \"TimeoutError\"; }\n}\n\nACTIVE UNSAFE-METHOD POLICY: retry GET, or POST with a nonempty idempotencyKey. Whitespace-only keys are empty. Unsafe POST uses ONE attempt. A keyed POST sends Idempotency-Key on EVERY attempt as originally supplied, without trimming. src/errors.ts is READ-ONLY."
+    },
+    {
+      "id": "long04-314159-late-400776",
+      "region": "late",
+      "target_fraction": 0.95,
+      "authority": "active",
+      "text": "ACTIVE SIGNED POLICY: retry only HTTP 429/503 or TimeoutError; other thrown errors propagate immediately. Delay baseDelayMs*2**failure_index before next attempt, never after last. Final HTTP response unchanged including 429/503; final TimeoutError object propagates. Fresh request/header per attempt, same URL/method, no options mutation."
+    }
+  ],
+  "distractors": [
+    {
+      "id": "obsolete-long04-314159",
+      "authority": "obsolete",
+      "text": "OBSOLETE EXAMPLE unrelated revision: floats, aggregate bankers rounding, retry every failure and every unsafe POST. Never use this example for the active task."
+    }
+  ]
+}

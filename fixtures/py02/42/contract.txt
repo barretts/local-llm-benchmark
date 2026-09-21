@@ -1,0 +1,1 @@
+Repair src/ranges.py: merge_ranges(ranges) returns a sorted list of integer tuples for half-open ranges. Merge only actual overlap or duplicates; adjacent ranges remain separate. Drop zero-length ranges, reject end < start with ValueError, allow negative coordinates, and never mutate the input container or its pairs. Empty input returns [].

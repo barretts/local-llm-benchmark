@@ -1,0 +1,9 @@
+Repair src/settings.ts. Preserve Settings {port:number;debug:boolean;
+tags:string[];timeoutMs:number} and parseSettings(env,defaults):Settings.
+Read only supplied APP_PORT, APP_DEBUG, APP_TAGS, APP_TIMEOUT_MS; never
+process.env. undefined uses defaults, with an independent tags array.
+Trim numeric/boolean strings. Numbers must be digits only (leading zeros
+allowed), port 1..65535 and integer timeout>=0. No signs/fractions/exponents/
+empty text. Debug accepts case-insensitive true/false or 1/0 only. Provided
+tags split on commas, trim, discard empties and deduplicate case-sensitively
+in first order. Empty tags clear. Reject invalid values; mutate no inputs.

@@ -1,0 +1,9 @@
+Repair src/page.ts and preserve RecordItem {id:string;createdAt:number}, Page
+{items:RecordItem[];nextCursor:string|null}, and paginate(records,
+{limit,cursor?}). Records have unique ids and finite timestamps. Sort by
+ascending (createdAt,id), comparing strings with < and >. Do not mutate
+readonly input. limit is an integer 1..1000. A cursor is base64url UTF-8
+JSON [finite number,string] with strict validation. Select tuples strictly
+greater than the cursor even after its record was deleted. nextCursor is
+encoded from the final returned item exactly when more remain; otherwise
+null, including an empty page. Copying item objects is not required.

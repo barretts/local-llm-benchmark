@@ -1,0 +1,12 @@
+{
+  "answer": {
+    "total": "619.65",
+    "currency": "EUR",
+    "schema_revision": 5
+  },
+  "evidence_ids": [
+    "long02-42-early-877572",
+    "long02-42-middle-388389",
+    "long02-42-late-356787"
+  ]
+}

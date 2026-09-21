@@ -1,0 +1,4091 @@
+{
+  "language": "python",
+  "source": {
+    "src/config.py": "def overlay_config(base: dict, overrides: dict) -> dict:\n    result = base.copy()\n    for key, value in overrides.items():\n        if not value:\n            continue\n        if isinstance(result.get(key), dict) and isinstance(value, dict):\n            result[key].update(overlay_config(result[key], value))\n        elif isinstance(result.get(key), list) and isinstance(value, list):\n            result[key] = result[key] + value\n        else:\n            result[key] = value\n    return result\n"
+  },
+  "gold": {
+    "src/config.py": "from copy import deepcopy\n\ndef overlay_config(base: dict, overrides: dict) -> dict:\n    result = deepcopy(base)\n    for key, value in overrides.items():\n        if key in base and isinstance(base[key], dict) and isinstance(value, dict):\n            result[key] = overlay_config(base[key], value)\n        else:\n            result[key] = deepcopy(value)\n    return result\n"
+  },
+  "public_tests": {
+    "test_public.py": "import unittest\nimport copy\nimport math\nimport asyncio\nfrom decimal import Decimal, ROUND_HALF_UP\nfrom src.config import overlay_config\nCASES = {}\n\nclass Public(unittest.TestCase):\n    def test_falsy_override(self):\n        self.assertEqual(overlay_config({\"flag\": True, \"n\": 9}, {\"flag\": False, \"n\": 0}), {\"flag\": False, \"n\": 0})\n    def test_nested_base_unchanged(self):\n        base = {\"a\": {\"x\": 1, \"y\": 2}}\n        before = copy.deepcopy(base)\n        self.assertEqual(overlay_config(base, {\"a\": {\"x\": 3}}), {\"a\": {\"x\": 3, \"y\": 2}})\n        self.assertEqual(base, before)\n\n\nif __name__ == '__main__':\n    unittest.main()\n"
+  },
+  "hidden_tests": {
+    "test_hidden.py": "import unittest\nimport copy\nimport math\nimport asyncio\nfrom decimal import Decimal, ROUND_HALF_UP\nfrom src.config import overlay_config\nCASES = [{'base': {'alpha': []}, 'overrides': {'alpha': {'a': False}}, 'expected': {'alpha': {'a': False}}}, {'base': {'gamma': {'c': False, 'b': [[False, False], None], 'a': [], 'd': []}, 'beta': {'c': {'b': 0, 'c': []}, 'b': '', 'a': [['', 'value'], [], None], 'd': []}}, 'overrides': {}, 'expected': {'gamma': {'c': False, 'b': [[False, False], None], 'a': [], 'd': []}, 'beta': {'c': {'b': 0, 'c': []}, 'b': '', 'a': [['', 'value'], [], None], 'd': []}}}, {'base': {}, 'overrides': {'beta': [[]], 'delta': {'c': {'a': {'a': 0, 'd': 0, 'c': 7, 'b': False}, 'b': ['', True], 'd': []}, 'b': {'a': True, 'c': {}, 'd': 7}}}, 'expected': {'beta': [[]], 'delta': {'c': {'a': {'a': 0, 'd': 0, 'c': 7, 'b': False}, 'b': ['', True], 'd': []}, 'b': {'a': True, 'c': {}, 'd': 7}}}}, {'base': {'alpha': [None, {'b': 7, 'd': 7, 'a': [True, 7, 7], 'c': True}], 'beta': 0}, 'overrides': {'alpha': [{}, {}], 'delta': ['', 7, [False, '']], 'beta': {'c': {'b': 'value', 'd': {'c': None, 'd': 0}}, 'd': [{'a': 'value', 'c': False, 'd': True}]}}, 'expected': {'alpha': [{}, {}], 'beta': {'c': {'b': 'value', 'd': {'c': None, 'd': 0}}, 'd': [{'a': 'value', 'c': False, 'd': True}]}, 'delta': ['', 7, [False, '']]}}, {'base': {'beta': [{'d': '', 'a': [True, ''], 'c': {'d': 0}}, [None, ['value', False]]], 'gamma': [{}, [], [[7, ''], {}, 7]], 'alpha': ''}, 'overrides': {'delta': {'c': [[True, 0, None]], 'a': '', 'b': None}, 'beta': {'c': {}, 'd': 7}}, 'expected': {'beta': {'c': {}, 'd': 7}, 'gamma': [{}, [], [[7, ''], {}, 7]], 'alpha': '', 'delta': {'c': [[True, 0, None]], 'a': '', 'b': None}}}, {'base': {'alpha': {'d': [True, [False], {}]}, 'gamma': {'a': [[]], 'b': None, 'd': [{'d': '', 'b': True}, [], [False, 0, 7]], 'c': {'d': {'a': 'value', 'c': False, 'd': 7}, 'a': False, 'c': '', 'b': {'d': True, 'c': False}}}}, 'overrides': {'delta': 0, 'beta': {}}, 'expected': {'alpha': {'d': [True, [False], {}]}, 'gamma': {'a': [[]], 'b': None, 'd': [{'d': '', 'b': True}, [], [False, 0, 7]], 'c': {'d': {'a': 'value', 'c': False, 'd': 7}, 'a': False, 'c': '', 'b': {'d': True, 'c': False}}}, 'delta': 0, 'beta': {}}}, {'base': {'alpha': True, 'gamma': {'c': {'c': None, 'd': {'b': True, 'a': 7, 'd': 0}}, 'a': {'c': ['', True, True], 'a': None, 'b': 0, 'd': [7]}, 'd': {'c': {'c': ''}, 'd': 'value'}, 'b': ['value', ['value', 'value', True], {}]}}, 'overrides': {}, 'expected': {'alpha': True, 'gamma': {'c': {'c': None, 'd': {'b': True, 'a': 7, 'd': 0}}, 'a': {'c': ['', True, True], 'a': None, 'b': 0, 'd': [7]}, 'd': {'c': {'c': ''}, 'd': 'value'}, 'b': ['value', ['value', 'value', True], {}]}}}, {'base': {'beta': [{'c': ['value', True, ''], 'b': {'a': None}, 'd': False, 'a': ''}, '', [[7, False, 7], None]], 'alpha': 'value'}, 'overrides': {'alpha': [[], {}, {'c': [0]}]}, 'expected': {'beta': [{'c': ['value', True, ''], 'b': {'a': None}, 'd': False, 'a': ''}, '', [[7, False, 7], None]], 'alpha': [[], {}, {'c': [0]}]}}, {'base': {'alpha': [[['', False], []], {'b': []}, [[''], {}]], 'gamma': {}, 'beta': [{'b': [None, True], 'd': None}, {}]}, 'overrides': {'alpha': [], 'delta': 7, 'beta': {'c': None, 'd': {'c': [0, 0, True]}, 'b': [{'d': 'value', 'a': True}]}}, 'expected': {'alpha': [], 'gamma': {}, 'beta': {'c': None, 'd': {'c': [0, 0, True]}, 'b': [{'d': 'value', 'a': True}]}, 'delta': 7}}, {'base': {}, 'overrides': {'delta': [[], {'d': {'c': 'value'}, 'c': [7, False], 'a': [True, None]}, [[None, True, True], {'a': ''}, [True, True, None]]], 'alpha': ['', 'value', {'d': '', 'c': {'b': 7, 'a': False}, 'b': ['', False]}], 'beta': []}, 'expected': {'delta': [[], {'d': {'c': 'value'}, 'c': [7, False], 'a': [True, None]}, [[None, True, True], {'a': ''}, [True, True, None]]], 'alpha': ['', 'value', {'d': '', 'c': {'b': 7, 'a': False}, 'b': ['', False]}], 'beta': []}}, {'base': {}, 'overrides': {'delta': {'d': ''}, 'beta': 'value', 'alpha': []}, 'expected': {'delta': {'d': ''}, 'beta': 'value', 'alpha': []}}, {'base': {'alpha': {}, 'beta': [{'b': {'d': False, 'b': 'value', 'c': 7}}, [], True]}, 'overrides': {'alpha': {}}, 'expected': {'alpha': {}, 'beta': [{'b': {'d': False, 'b': 'value', 'c': 7}}, [], True]}}, {'base': {'beta': False, 'alpha': False, 'gamma': [[[7]]]}, 'overrides': {}, 'expected': {'beta': False, 'alpha': False, 'gamma': [[[7]]]}}, {'base': {'alpha': None, 'beta': True, 'gamma': []}, 'overrides': {'beta': [{'a': [], 'd': {}, 'b': {'c': 'value', 'a': True, 'b': 7, 'd': ''}}, 'value', []], 'alpha': None, 'delta': {'d': {}, 'c': {'d': ['value', 7, 0], 'c': False, 'a': ''}, 'b': [{'b': None, 'd': 'value', 'c': None}, [True, 0, 'value'], {'d': ''}], 'a': 7}}, 'expected': {'alpha': None, 'beta': [{'a': [], 'd': {}, 'b': {'c': 'value', 'a': True, 'b': 7, 'd': ''}}, 'value', []], 'gamma': [], 'delta': {'d': {}, 'c': {'d': ['value', 7, 0], 'c': False, 'a': ''}, 'b': [{'b': None, 'd': 'value', 'c': None}, [True, 0, 'value'], {'d': ''}], 'a': 7}}}, {'base': {}, 'overrides': {}, 'expected': {}}, {'base': {'beta': {'d': []}}, 'overrides': {}, 'expected': {'beta': {'d': []}}}, {'base': {}, 'overrides': {}, 'expected': {}}, {'base': {'gamma': {'d': {'a': {'c': False, 'b': 0, 'a': False, 'd': ''}, 'c': {'a': False, 'b': None}, 'd': [False, True, 7]}, 'b': [['value', '', ''], {'b': 0, 'd': False, 'c': 7, 'a': None}]}, 'alpha': '', 'beta': False}, 'overrides': {'beta': [], 'alpha': ['value'], 'delta': {'b': {'a': ['value', 7, 0]}, 'd': [{'d': '', 'a': ''}], 'a': 7}}, 'expected': {'gamma': {'d': {'a': {'c': False, 'b': 0, 'a': False, 'd': ''}, 'c': {'a': False, 'b': None}, 'd': [False, True, 7]}, 'b': [['value', '', ''], {'b': 0, 'd': False, 'c': 7, 'a': None}]}, 'alpha': ['value'], 'beta': [], 'delta': {'b': {'a': ['value', 7, 0]}, 'd': [{'d': '', 'a': ''}], 'a': 7}}}, {'base': {'alpha': {'b': [[None, True, ''], {}, {'b': '', 'd': 0, 'c': ''}], 'c': 7}, 'gamma': [], 'beta': {}}, 'overrides': {'beta': '', 'delta': {'a': [[False, ''], [False], [True]], 'd': False}, 'alpha': 'value'}, 'expected': {'alpha': 'value', 'gamma': [], 'beta': '', 'delta': {'a': [[False, ''], [False], [True]], 'd': False}}}, {'base': {'beta': {'d': {'c': {'c': 0, 'a': '', 'd': 0, 'b': None}, 'd': 7}}}, 'overrides': {'delta': {'a': [['value'], {'b': 7}], 'b': {}, 'd': [7, True, ['value', True, 7]]}, 'alpha': None, 'beta': []}, 'expected': {'beta': [], 'delta': {'a': [['value'], {'b': 7}], 'b': {}, 'd': [7, True, ['value', True, 7]]}, 'alpha': None}}, {'base': {'alpha': {'d': [{'d': None}, 7, False], 'b': {'b': ['value', True], 'a': {}}, 'c': {'c': {'d': True}}}}, 'overrides': {'beta': False, 'alpha': {'d': {'a': True, 'b': 7, 'd': [False, '', 7], 'c': ['value', 0, False]}}}, 'expected': {'alpha': {'d': {'a': True, 'b': 7, 'd': [False, '', 7], 'c': ['value', 0, False]}, 'b': {'b': ['value', True], 'a': {}}, 'c': {'c': {'d': True}}}, 'beta': False}}, {'base': {'gamma': {}, 'alpha': '', 'beta': 0}, 'overrides': {'alpha': {'a': {}, 'b': {}}, 'delta': [{'d': {'c': 'value', 'a': False, 'b': None, 'd': ''}, 'c': {'b': 'value', 'a': 0}, 'b': {'c': 7, 'd': 0}, 'a': {'d': False, 'b': False, 'c': 7, 'a': True}}, [{'c': 0, 'd': None, 'b': True, 'a': None}, False]], 'beta': {}}, 'expected': {'gamma': {}, 'alpha': {'a': {}, 'b': {}}, 'beta': {}, 'delta': [{'d': {'c': 'value', 'a': False, 'b': None, 'd': ''}, 'c': {'b': 'value', 'a': 0}, 'b': {'c': 7, 'd': 0}, 'a': {'d': False, 'b': False, 'c': 7, 'a': True}}, [{'c': 0, 'd': None, 'b': True, 'a': None}, False]]}}, {'base': {}, 'overrides': {}, 'expected': {}}, {'base': {}, 'overrides': {}, 'expected': {}}, {'base': {'beta': [], 'gamma': [[0, 'value'], True], 'alpha': {'b': [{'c': 7, 'a': '', 'd': 'value'}], 'c': False, 'd': 0}}, 'overrides': {'alpha': 7, 'delta': {'a': ''}}, 'expected': {'beta': [], 'gamma': [[0, 'value'], True], 'alpha': 7, 'delta': {'a': ''}}}, {'base': {'beta': 7, 'gamma': [{'b': ['value', 7], 'a': ''}, {'a': {}}, {'a': [True], 'd': None}], 'alpha': {'b': 'value', 'a': False}}, 'overrides': {'alpha': {'c': [0, 'value'], 'd': {'a': []}, 'a': {'b': [None, True, False], 'a': None, 'c': True}, 'b': [['value', 7, True]]}}, 'expected': {'beta': 7, 'gamma': [{'b': ['value', 7], 'a': ''}, {'a': {}}, {'a': [True], 'd': None}], 'alpha': {'b': [['value', 7, True]], 'a': {'b': [None, True, False], 'a': None, 'c': True}, 'c': [0, 'value'], 'd': {'a': []}}}}, {'base': {}, 'overrides': {'alpha': True, 'delta': {'c': {'b': 0}, 'a': [''], 'd': {'d': 'value', 'b': 7}, 'b': {'c': '', 'a': 0}}}, 'expected': {'alpha': True, 'delta': {'c': {'b': 0}, 'a': [''], 'd': {'d': 'value', 'b': 7}, 'b': {'c': '', 'a': 0}}}}, {'base': {'gamma': [{'b': [7, 0], 'd': {'b': 7, 'd': True, 'c': False}, 'c': [None, 7, 'value']}, {'c': {'a': None, 'd': 0, 'c': ''}, 'a': {'a': 0, 'c': 7, 'd': False}}], 'alpha': {'c': 'value', 'a': [], 'b': {'a': [None, True]}}}, 'overrides': {'delta': [], 'alpha': {'b': False, 'd': {}, 'c': {}}}, 'expected': {'gamma': [{'b': [7, 0], 'd': {'b': 7, 'd': True, 'c': False}, 'c': [None, 7, 'value']}, {'c': {'a': None, 'd': 0, 'c': ''}, 'a': {'a': 0, 'c': 7, 'd': False}}], 'alpha': {'c': {}, 'a': [], 'b': False, 'd': {}}, 'delta': []}}, {'base': {'alpha': 'value'}, 'overrides': {'beta': ''}, 'expected': {'alpha': 'value', 'beta': ''}}, {'base': {}, 'overrides': {'beta': ''}, 'expected': {'beta': ''}}, {'base': {'beta': [{'a': {'c': False, 'a': 0}, 'c': False}, {'b': [None], 'a': {'b': 'value'}}, ['value']]}, 'overrides': {'delta': {'d': {'a': {'c': '', 'b': 7, 'a': None}, 'c': {}}, 'a': [[0, None, 'value'], ['', False, '']], 'b': None}, 'beta': 'value', 'alpha': {'b': {'b': [True, 'value'], 'c': {'a': 'value', 'b': '', 'c': 'value'}, 'a': None, 'd': False}}}, 'expected': {'beta': 'value', 'delta': {'d': {'a': {'c': '', 'b': 7, 'a': None}, 'c': {}}, 'a': [[0, None, 'value'], ['', False, '']], 'b': None}, 'alpha': {'b': {'b': [True, 'value'], 'c': {'a': 'value', 'b': '', 'c': 'value'}, 'a': None, 'd': False}}}}, {'base': {'alpha': [[{'b': True, 'd': 0, 'c': 'value'}, {'a': False}], None], 'gamma': False, 'beta': {}}, 'overrides': {'alpha': [[{'b': None}], {}]}, 'expected': {'alpha': [[{'b': None}], {}], 'gamma': False, 'beta': {}}}, {'base': {'alpha': {'b': {'a': {'b': False, 'c': 7, 'a': ''}, 'd': {}}, 'a': [{'d': 7}, {'b': 7}], 'd': False, 'c': 'value'}, 'beta': [[{'c': False, 'd': 'value'}, [False, '']]], 'gamma': ''}, 'overrides': {'alpha': []}, 'expected': {'alpha': [], 'beta': [[{'c': False, 'd': 'value'}, [False, '']]], 'gamma': ''}}, {'base': {}, 'overrides': {'alpha': {'c': {'c': {'c': True, 'd': ''}, 'a': {'c': True, 'd': '', 'b': 7, 'a': ''}}}}, 'expected': {'alpha': {'c': {'c': {'c': True, 'd': ''}, 'a': {'c': True, 'd': '', 'b': 7, 'a': ''}}}}}, {'base': {'gamma': {'b': True, 'a': [True]}}, 'overrides': {'alpha': [], 'delta': {'d': {}, 'c': {'a': None, 'd': 7, 'c': {}, 'b': [True]}}}, 'expected': {'gamma': {'b': True, 'a': [True]}, 'alpha': [], 'delta': {'d': {}, 'c': {'a': None, 'd': 7, 'c': {}, 'b': [True]}}}}, {'base': {'alpha': True, 'gamma': {}}, 'overrides': {}, 'expected': {'alpha': True, 'gamma': {}}}, {'base': {'alpha': [{'b': False}, 0], 'beta': [{'c': False, 'b': {'a': False, 'c': 7, 'd': True}, 'a': [True, 0]}]}, 'overrides': {'delta': [None, [0, {'c': ''}, 7], 7], 'beta': 'value', 'alpha': {'a': [{}], 'b': 7}}, 'expected': {'alpha': {'a': [{}], 'b': 7}, 'beta': 'value', 'delta': [None, [0, {'c': ''}, 7], 7]}}, {'base': {'beta': [{'d': 'value', 'b': [False], 'a': []}, False]}, 'overrides': {}, 'expected': {'beta': [{'d': 'value', 'b': [False], 'a': []}, False]}}, {'base': {}, 'overrides': {'beta': None, 'alpha': True}, 'expected': {'beta': None, 'alpha': True}}, {'base': {'beta': [], 'alpha': 7}, 'overrides': {'delta': []}, 'expected': {'beta': [], 'alpha': 7, 'delta': []}}]\n\ndef mutable_ids(value):\n    found = set()\n    if isinstance(value, (dict, list)):\n        found.add(id(value))\n        values = value.values() if isinstance(value, dict) else value\n        for child in values:\n            found.update(mutable_ids(child))\n    return found\n\nclass Hidden(unittest.TestCase):\n    def test_null_empty_string_and_list(self):\n        self.assertEqual(overlay_config({\"a\": 1, \"b\": \"x\", \"c\": [1]}, {\"a\": None, \"b\": \"\", \"c\": []}), {\"a\": None, \"b\": \"\", \"c\": []})\n    def test_lists_replace_never_concatenate(self):\n        self.assertEqual(overlay_config({\"a\": [1, 2]}, {\"a\": [3]}), {\"a\": [3]})\n    def test_dict_scalar_both_directions(self):\n        self.assertEqual(overlay_config({\"a\": {\"x\": 1}, \"b\": 2}, {\"a\": 7, \"b\": {\"y\": [3]}}), {\"a\": 7, \"b\": {\"y\": [3]}})\n    def test_nested_list_dict_isolation(self):\n        base = {\"a\": [{\"x\": [1]}]}\n        overrides = {\"b\": [{\"y\": [2]}]}\n        result = overlay_config(base, overrides)\n        result[\"a\"][0][\"x\"].append(9)\n        result[\"b\"][0][\"y\"].append(9)\n        self.assertEqual(base, {\"a\": [{\"x\": [1]}]})\n        self.assertEqual(overrides, {\"b\": [{\"y\": [2]}]})\n    def test_one_side_keys_survive(self):\n        base = {\"base\": {\"x\": [1]}}\n        overrides = {\"new\": [2]}\n        result = overlay_config(base, overrides)\n        self.assertEqual(result, {\"base\": {\"x\": [1]}, \"new\": [2]})\n        self.assertFalse(mutable_ids(result) & (mutable_ids(base) | mutable_ids(overrides)))\n    def test_empty_inputs_independent(self):\n        base = {\"a\": []}\n        result = overlay_config(base, {})\n        result[\"a\"].append(1)\n        self.assertEqual(base, {\"a\": []})\n        self.assertEqual(overlay_config({}, {}), {})\n    def test_recursive_merge_preserves_siblings(self):\n        self.assertEqual(overlay_config({\"a\": {\"b\": {\"x\": 1, \"y\": 2}, \"c\": [3]}}, {\"a\": {\"b\": {\"x\": 0}}}), {\"a\": {\"b\": {\"x\": 0, \"y\": 2}, \"c\": [3]}})\n    def test_seeded_trees_and_no_shared_descendants(self):\n        for index, case in enumerate(CASES):\n            base, overrides = copy.deepcopy(case[\"base\"]), copy.deepcopy(case[\"overrides\"])\n            before_base, before_overrides = copy.deepcopy(base), copy.deepcopy(overrides)\n            with self.subTest(index=index):\n                result = overlay_config(base, overrides)\n                self.assertEqual(result, case[\"expected\"])\n                self.assertEqual(base, before_base)\n                self.assertEqual(overrides, before_overrides)\n                self.assertFalse(mutable_ids(result) & (mutable_ids(base) | mutable_ids(overrides)))\n                result[\"controller_output_mutation\"] = [index]\n                self.assertEqual(base, before_base)\n                self.assertEqual(overrides, before_overrides)\n\n\nif __name__ == '__main__':\n    unittest.main()\n"
+  },
+  "public_count": 2,
+  "hidden_count": 8,
+  "contract": "Repair src/config.py: overlay_config(base: dict, overrides: dict) -> dict for JSON-like trees. Recursively merge only dict/dict values. Override lists replace lists. Every other override replaces, including False, 0, empty string and None. Retain one-side keys. Return a fully independent deep structure sharing no mutable descendant with either unchanged input.",
+  "cases": [
+    {
+      "base": {
+        "alpha": []
+      },
+      "overrides": {
+        "alpha": {
+          "a": false
+        }
+      },
+      "expected": {
+        "alpha": {
+          "a": false
+        }
+      }
+    },
+    {
+      "base": {
+        "gamma": {
+          "c": false,
+          "b": [
+            [
+              false,
+              false
+            ],
+            null
+          ],
+          "a": [],
+          "d": []
+        },
+        "beta": {
+          "c": {
+            "b": 0,
+            "c": []
+          },
+          "b": "",
+          "a": [
+            [
+              "",
+              "value"
+            ],
+            [],
+            null
+          ],
+          "d": []
+        }
+      },
+      "overrides": {},
+      "expected": {
+        "gamma": {
+          "c": false,
+          "b": [
+            [
+              false,
+              false
+            ],
+            null
+          ],
+          "a": [],
+          "d": []
+        },
+        "beta": {
+          "c": {
+            "b": 0,
+            "c": []
+          },
+          "b": "",
+          "a": [
+            [
+              "",
+              "value"
+            ],
+            [],
+            null
+          ],
+          "d": []
+        }
+      }
+    },
+    {
+      "base": {},
+      "overrides": {
+        "beta": [
+          []
+        ],
+        "delta": {
+          "c": {
+            "a": {
+              "a": 0,
+              "d": 0,
+              "c": 7,
+              "b": false
+            },
+            "b": [
+              "",
+              true
+            ],
+            "d": []
+          },
+          "b": {
+            "a": true,
+            "c": {},
+            "d": 7
+          }
+        }
+      },
+      "expected": {
+        "beta": [
+          []
+        ],
+        "delta": {
+          "c": {
+            "a": {
+              "a": 0,
+              "d": 0,
+              "c": 7,
+              "b": false
+            },
+            "b": [
+              "",
+              true
+            ],
+            "d": []
+          },
+          "b": {
+            "a": true,
+            "c": {},
+            "d": 7
+          }
+        }
+      }
+    },
+    {
+      "base": {
+        "alpha": [
+          null,
+          {
+            "b": 7,
+            "d": 7,
+            "a": [
+              true,
+              7,
+              7
+            ],
+            "c": true
+          }
+        ],
+        "beta": 0
+      },
+      "overrides": {
+        "alpha": [
+          {},
+          {}
+        ],
+        "delta": [
+          "",
+          7,
+          [
+            false,
+            ""
+          ]
+        ],
+        "beta": {
+          "c": {
+            "b": "value",
+            "d": {
+              "c": null,
+              "d": 0
+            }
+          },
+          "d": [
+            {
+              "a": "value",
+              "c": false,
+              "d": true
+            }
+          ]
+        }
+      },
+      "expected": {
+        "alpha": [
+          {},
+          {}
+        ],
+        "beta": {
+          "c": {
+            "b": "value",
+            "d": {
+              "c": null,
+              "d": 0
+            }
+          },
+          "d": [
+            {
+              "a": "value",
+              "c": false,
+              "d": true
+            }
+          ]
+        },
+        "delta": [
+          "",
+          7,
+          [
+            false,
+            ""
+          ]
+        ]
+      }
+    },
+    {
+      "base": {
+        "beta": [
+          {
+            "d": "",
+            "a": [
+              true,
+              ""
+            ],
+            "c": {
+              "d": 0
+            }
+          },
+          [
+            null,
+            [
+              "value",
+              false
+            ]
+          ]
+        ],
+        "gamma": [
+          {},
+          [],
+          [
+            [
+              7,
+              ""
+            ],
+            {},
+            7
+          ]
+        ],
+        "alpha": ""
+      },
+      "overrides": {
+        "delta": {
+          "c": [
+            [
+              true,
+              0,
+              null
+            ]
+          ],
+          "a": "",
+          "b": null
+        },
+        "beta": {
+          "c": {},
+          "d": 7
+        }
+      },
+      "expected": {
+        "beta": {
+          "c": {},
+          "d": 7
+        },
+        "gamma": [
+          {},
+          [],
+          [
+            [
+              7,
+              ""
+            ],
+            {},
+            7
+          ]
+        ],
+        "alpha": "",
+        "delta": {
+          "c": [
+            [
+              true,
+              0,
+              null
+            ]
+          ],
+          "a": "",
+          "b": null
+        }
+      }
+    },
+    {
+      "base": {
+        "alpha": {
+          "d": [
+            true,
+            [
+              false
+            ],
+            {}
+          ]
+        },
+        "gamma": {
+          "a": [
+            []
+          ],
+          "b": null,
+          "d": [
+            {
+              "d": "",
+              "b": true
+            },
+            [],
+            [
+              false,
+              0,
+              7
+            ]
+          ],
+          "c": {
+            "d": {
+              "a": "value",
+              "c": false,
+              "d": 7
+            },
+            "a": false,
+            "c": "",
+            "b": {
+              "d": true,
+              "c": false
+            }
+          }
+        }
+      },
+      "overrides": {
+        "delta": 0,
+        "beta": {}
+      },
+      "expected": {
+        "alpha": {
+          "d": [
+            true,
+            [
+              false
+            ],
+            {}
+          ]
+        },
+        "gamma": {
+          "a": [
+            []
+          ],
+          "b": null,
+          "d": [
+            {
+              "d": "",
+              "b": true
+            },
+            [],
+            [
+              false,
+              0,
+              7
+            ]
+          ],
+          "c": {
+            "d": {
+              "a": "value",
+              "c": false,
+              "d": 7
+            },
+            "a": false,
+            "c": "",
+            "b": {
+              "d": true,
+              "c": false
+            }
+          }
+        },
+        "delta": 0,
+        "beta": {}
+      }
+    },
+    {
+      "base": {
+        "alpha": true,
+        "gamma": {
+          "c": {
+            "c": null,
+            "d": {
+              "b": true,
+              "a": 7,
+              "d": 0
+            }
+          },
+          "a": {
+            "c": [
+              "",
+              true,
+              true
+            ],
+            "a": null,
+            "b": 0,
+            "d": [
+              7
+            ]
+          },
+          "d": {
+            "c": {
+              "c": ""
+            },
+            "d": "value"
+          },
+          "b": [
+            "value",
+            [
+              "value",
+              "value",
+              true
+            ],
+            {}
+          ]
+        }
+      },
+      "overrides": {},
+      "expected": {
+        "alpha": true,
+        "gamma": {
+          "c": {
+            "c": null,
+            "d": {
+              "b": true,
+              "a": 7,
+              "d": 0
+            }
+          },
+          "a": {
+            "c": [
+              "",
+              true,
+              true
+            ],
+            "a": null,
+            "b": 0,
+            "d": [
+              7
+            ]
+          },
+          "d": {
+            "c": {
+              "c": ""
+            },
+            "d": "value"
+          },
+          "b": [
+            "value",
+            [
+              "value",
+              "value",
+              true
+            ],
+            {}
+          ]
+        }
+      }
+    },
+    {
+      "base": {
+        "beta": [
+          {
+            "c": [
+              "value",
+              true,
+              ""
+            ],
+            "b": {
+              "a": null
+            },
+            "d": false,
+            "a": ""
+          },
+          "",
+          [
+            [
+              7,
+              false,
+              7
+            ],
+            null
+          ]
+        ],
+        "alpha": "value"
+      },
+      "overrides": {
+        "alpha": [
+          [],
+          {},
+          {
+            "c": [
+              0
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "beta": [
+          {
+            "c": [
+              "value",
+              true,
+              ""
+            ],
+            "b": {
+              "a": null
+            },
+            "d": false,
+            "a": ""
+          },
+          "",
+          [
+            [
+              7,
+              false,
+              7
+            ],
+            null
+          ]
+        ],
+        "alpha": [
+          [],
+          {},
+          {
+            "c": [
+              0
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "base": {
+        "alpha": [
+          [
+            [
+              "",
+              false
+            ],
+            []
+          ],
+          {
+            "b": []
+          },
+          [
+            [
+              ""
+            ],
+            {}
+          ]
+        ],
+        "gamma": {},
+        "beta": [
+          {
+            "b": [
+              null,
+              true
+            ],
+            "d": null
+          },
+          {}
+        ]
+      },
+      "overrides": {
+        "alpha": [],
+        "delta": 7,
+        "beta": {
+          "c": null,
+          "d": {
+            "c": [
+              0,
+              0,
+              true
+            ]
+          },
+          "b": [
+            {
+              "d": "value",
+              "a": true
+            }
+          ]
+        }
+      },
+      "expected": {
+        "alpha": [],
+        "gamma": {},
+        "beta": {
+          "c": null,
+          "d": {
+            "c": [
+              0,
+              0,
+              true
+            ]
+          },
+          "b": [
+            {
+              "d": "value",
+              "a": true
+            }
+          ]
+        },
+        "delta": 7
+      }
+    },
+    {
+      "base": {},
+      "overrides": {
+        "delta": [
+          [],
+          {
+            "d": {
+              "c": "value"
+            },
+            "c": [
+              7,
+              false
+            ],
+            "a": [
+              true,
+              null
+            ]
+          },
+          [
+            [
+              null,
+              true,
+              true
+            ],
+            {
+              "a": ""
+            },
+            [
+              true,
+              true,
+              null
+            ]
+          ]
+        ],
+        "alpha": [
+          "",
+          "value",
+          {
+            "d": "",
+            "c": {
+              "b": 7,
+              "a": false
+            },
+            "b": [
+              "",
+              false
+            ]
+          }
+        ],
+        "beta": []
+      },
+      "expected": {
+        "delta": [
+          [],
+          {
+            "d": {
+              "c": "value"
+            },
+            "c": [
+              7,
+              false
+            ],
+            "a": [
+              true,
+              null
+            ]
+          },
+          [
+            [
+              null,
+              true,
+              true
+            ],
+            {
+              "a": ""
+            },
+            [
+              true,
+              true,
+              null
+            ]
+          ]
+        ],
+        "alpha": [
+          "",
+          "value",
+          {
+            "d": "",
+            "c": {
+              "b": 7,
+              "a": false
+            },
+            "b": [
+              "",
+              false
+            ]
+          }
+        ],
+        "beta": []
+      }
+    },
+    {
+      "base": {},
+      "overrides": {
+        "delta": {
+          "d": ""
+        },
+        "beta": "value",
+        "alpha": []
+      },
+      "expected": {
+        "delta": {
+          "d": ""
+        },
+        "beta": "value",
+        "alpha": []
+      }
+    },
+    {
+      "base": {
+        "alpha": {},
+        "beta": [
+          {
+            "b": {
+              "d": false,
+              "b": "value",
+              "c": 7
+            }
+          },
+          [],
+          true
+        ]
+      },
+      "overrides": {
+        "alpha": {}
+      },
+      "expected": {
+        "alpha": {},
+        "beta": [
+          {
+            "b": {
+              "d": false,
+              "b": "value",
+              "c": 7
+            }
+          },
+          [],
+          true
+        ]
+      }
+    },
+    {
+      "base": {
+        "beta": false,
+        "alpha": false,
+        "gamma": [
+          [
+            [
+              7
+            ]
+          ]
+        ]
+      },
+      "overrides": {},
+      "expected": {
+        "beta": false,
+        "alpha": false,
+        "gamma": [
+          [
+            [
+              7
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "base": {
+        "alpha": null,
+        "beta": true,
+        "gamma": []
+      },
+      "overrides": {
+        "beta": [
+          {
+            "a": [],
+            "d": {},
+            "b": {
+              "c": "value",
+              "a": true,
+              "b": 7,
+              "d": ""
+            }
+          },
+          "value",
+          []
+        ],
+        "alpha": null,
+        "delta": {
+          "d": {},
+          "c": {
+            "d": [
+              "value",
+              7,
+              0
+            ],
+            "c": false,
+            "a": ""
+          },
+          "b": [
+            {
+              "b": null,
+              "d": "value",
+              "c": null
+            },
+            [
+              true,
+              0,
+              "value"
+            ],
+            {
+              "d": ""
+            }
+          ],
+          "a": 7
+        }
+      },
+      "expected": {
+        "alpha": null,
+        "beta": [
+          {
+            "a": [],
+            "d": {},
+            "b": {
+              "c": "value",
+              "a": true,
+              "b": 7,
+              "d": ""
+            }
+          },
+          "value",
+          []
+        ],
+        "gamma": [],
+        "delta": {
+          "d": {},
+          "c": {
+            "d": [
+              "value",
+              7,
+              0
+            ],
+            "c": false,
+            "a": ""
+          },
+          "b": [
+            {
+              "b": null,
+              "d": "value",
+              "c": null
+            },
+            [
+              true,
+              0,
+              "value"
+            ],
+            {
+              "d": ""
+            }
+          ],
+          "a": 7
+        }
+      }
+    },
+    {
+      "base": {},
+      "overrides": {},
+      "expected": {}
+    },
+    {
+      "base": {
+        "beta": {
+          "d": []
+        }
+      },
+      "overrides": {},
+      "expected": {
+        "beta": {
+          "d": []
+        }
+      }
+    },
+    {
+      "base": {},
+      "overrides": {},
+      "expected": {}
+    },
+    {
+      "base": {
+        "gamma": {
+          "d": {
+            "a": {
+              "c": false,
+              "b": 0,
+              "a": false,
+              "d": ""
+            },
+            "c": {
+              "a": false,
+              "b": null
+            },
+            "d": [
+              false,
+              true,
+              7
+            ]
+          },
+          "b": [
+            [
+              "value",
+              "",
+              ""
+            ],
+            {
+              "b": 0,
+              "d": false,
+              "c": 7,
+              "a": null
+            }
+          ]
+        },
+        "alpha": "",
+        "beta": false
+      },
+      "overrides": {
+        "beta": [],
+        "alpha": [
+          "value"
+        ],
+        "delta": {
+          "b": {
+            "a": [
+              "value",
+              7,
+              0
+            ]
+          },
+          "d": [
+            {
+              "d": "",
+              "a": ""
+            }
+          ],
+          "a": 7
+        }
+      },
+      "expected": {
+        "gamma": {
+          "d": {
+            "a": {
+              "c": false,
+              "b": 0,
+              "a": false,
+              "d": ""
+            },
+            "c": {
+              "a": false,
+              "b": null
+            },
+            "d": [
+              false,
+              true,
+              7
+            ]
+          },
+          "b": [
+            [
+              "value",
+              "",
+              ""
+            ],
+            {
+              "b": 0,
+              "d": false,
+              "c": 7,
+              "a": null
+            }
+          ]
+        },
+        "alpha": [
+          "value"
+        ],
+        "beta": [],
+        "delta": {
+          "b": {
+            "a": [
+              "value",
+              7,
+              0
+            ]
+          },
+          "d": [
+            {
+              "d": "",
+              "a": ""
+            }
+          ],
+          "a": 7
+        }
+      }
+    },
+    {
+      "base": {
+        "alpha": {
+          "b": [
+            [
+              null,
+              true,
+              ""
+            ],
+            {},
+            {
+              "b": "",
+              "d": 0,
+              "c": ""
+            }
+          ],
+          "c": 7
+        },
+        "gamma": [],
+        "beta": {}
+      },
+      "overrides": {
+        "beta": "",
+        "delta": {
+          "a": [
+            [
+              false,
+              ""
+            ],
+            [
+              false
+            ],
+            [
+              true
+            ]
+          ],
+          "d": false
+        },
+        "alpha": "value"
+      },
+      "expected": {
+        "alpha": "value",
+        "gamma": [],
+        "beta": "",
+        "delta": {
+          "a": [
+            [
+              false,
+              ""
+            ],
+            [
+              false
+            ],
+            [
+              true
+            ]
+          ],
+          "d": false
+        }
+      }
+    },
+    {
+      "base": {
+        "beta": {
+          "d": {
+            "c": {
+              "c": 0,
+              "a": "",
+              "d": 0,
+              "b": null
+            },
+            "d": 7
+          }
+        }
+      },
+      "overrides": {
+        "delta": {
+          "a": [
+            [
+              "value"
+            ],
+            {
+              "b": 7
+            }
+          ],
+          "b": {},
+          "d": [
+            7,
+            true,
+            [
+              "value",
+              true,
+              7
+            ]
+          ]
+        },
+        "alpha": null,
+        "beta": []
+      },
+      "expected": {
+        "beta": [],
+        "delta": {
+          "a": [
+            [
+              "value"
+            ],
+            {
+              "b": 7
+            }
+          ],
+          "b": {},
+          "d": [
+            7,
+            true,
+            [
+              "value",
+              true,
+              7
+            ]
+          ]
+        },
+        "alpha": null
+      }
+    },
+    {
+      "base": {
+        "alpha": {
+          "d": [
+            {
+              "d": null
+            },
+            7,
+            false
+          ],
+          "b": {
+            "b": [
+              "value",
+              true
+            ],
+            "a": {}
+          },
+          "c": {
+            "c": {
+              "d": true
+            }
+          }
+        }
+      },
+      "overrides": {
+        "beta": false,
+        "alpha": {
+          "d": {
+            "a": true,
+            "b": 7,
+            "d": [
+              false,
+              "",
+              7
+            ],
+            "c": [
+              "value",
+              0,
+              false
+            ]
+          }
+        }
+      },
+      "expected": {
+        "alpha": {
+          "d": {
+            "a": true,
+            "b": 7,
+            "d": [
+              false,
+              "",
+              7
+            ],
+            "c": [
+              "value",
+              0,
+              false
+            ]
+          },
+          "b": {
+            "b": [
+              "value",
+              true
+            ],
+            "a": {}
+          },
+          "c": {
+            "c": {
+              "d": true
+            }
+          }
+        },
+        "beta": false
+      }
+    },
+    {
+      "base": {
+        "gamma": {},
+        "alpha": "",
+        "beta": 0
+      },
+      "overrides": {
+        "alpha": {
+          "a": {},
+          "b": {}
+        },
+        "delta": [
+          {
+            "d": {
+              "c": "value",
+              "a": false,
+              "b": null,
+              "d": ""
+            },
+            "c": {
+              "b": "value",
+              "a": 0
+            },
+            "b": {
+              "c": 7,
+              "d": 0
+            },
+            "a": {
+              "d": false,
+              "b": false,
+              "c": 7,
+              "a": true
+            }
+          },
+          [
+            {
+              "c": 0,
+              "d": null,
+              "b": true,
+              "a": null
+            },
+            false
+          ]
+        ],
+        "beta": {}
+      },
+      "expected": {
+        "gamma": {},
+        "alpha": {
+          "a": {},
+          "b": {}
+        },
+        "beta": {},
+        "delta": [
+          {
+            "d": {
+              "c": "value",
+              "a": false,
+              "b": null,
+              "d": ""
+            },
+            "c": {
+              "b": "value",
+              "a": 0
+            },
+            "b": {
+              "c": 7,
+              "d": 0
+            },
+            "a": {
+              "d": false,
+              "b": false,
+              "c": 7,
+              "a": true
+            }
+          },
+          [
+            {
+              "c": 0,
+              "d": null,
+              "b": true,
+              "a": null
+            },
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "base": {},
+      "overrides": {},
+      "expected": {}
+    },
+    {
+      "base": {},
+      "overrides": {},
+      "expected": {}
+    },
+    {
+      "base": {
+        "beta": [],
+        "gamma": [
+          [
+            0,
+            "value"
+          ],
+          true
+        ],
+        "alpha": {
+          "b": [
+            {
+              "c": 7,
+              "a": "",
+              "d": "value"
+            }
+          ],
+          "c": false,
+          "d": 0
+        }
+      },
+      "overrides": {
+        "alpha": 7,
+        "delta": {
+          "a": ""
+        }
+      },
+      "expected": {
+        "beta": [],
+        "gamma": [
+          [
+            0,
+            "value"
+          ],
+          true
+        ],
+        "alpha": 7,
+        "delta": {
+          "a": ""
+        }
+      }
+    },
+    {
+      "base": {
+        "beta": 7,
+        "gamma": [
+          {
+            "b": [
+              "value",
+              7
+            ],
+            "a": ""
+          },
+          {
+            "a": {}
+          },
+          {
+            "a": [
+              true
+            ],
+            "d": null
+          }
+        ],
+        "alpha": {
+          "b": "value",
+          "a": false
+        }
+      },
+      "overrides": {
+        "alpha": {
+          "c": [
+            0,
+            "value"
+          ],
+          "d": {
+            "a": []
+          },
+          "a": {
+            "b": [
+              null,
+              true,
+              false
+            ],
+            "a": null,
+            "c": true
+          },
+          "b": [
+            [
+              "value",
+              7,
+              true
+            ]
+          ]
+        }
+      },
+      "expected": {
+        "beta": 7,
+        "gamma": [
+          {
+            "b": [
+              "value",
+              7
+            ],
+            "a": ""
+          },
+          {
+            "a": {}
+          },
+          {
+            "a": [
+              true
+            ],
+            "d": null
+          }
+        ],
+        "alpha": {
+          "b": [
+            [
+              "value",
+              7,
+              true
+            ]
+          ],
+          "a": {
+            "b": [
+              null,
+              true,
+              false
+            ],
+            "a": null,
+            "c": true
+          },
+          "c": [
+            0,
+            "value"
+          ],
+          "d": {
+            "a": []
+          }
+        }
+      }
+    },
+    {
+      "base": {},
+      "overrides": {
+        "alpha": true,
+        "delta": {
+          "c": {
+            "b": 0
+          },
+          "a": [
+            ""
+          ],
+          "d": {
+            "d": "value",
+            "b": 7
+          },
+          "b": {
+            "c": "",
+            "a": 0
+          }
+        }
+      },
+      "expected": {
+        "alpha": true,
+        "delta": {
+          "c": {
+            "b": 0
+          },
+          "a": [
+            ""
+          ],
+          "d": {
+            "d": "value",
+            "b": 7
+          },
+          "b": {
+            "c": "",
+            "a": 0
+          }
+        }
+      }
+    },
+    {
+      "base": {
+        "gamma": [
+          {
+            "b": [
+              7,
+              0
+            ],
+            "d": {
+              "b": 7,
+              "d": true,
+              "c": false
+            },
+            "c": [
+              null,
+              7,
+              "value"
+            ]
+          },
+          {
+            "c": {
+              "a": null,
+              "d": 0,
+              "c": ""
+            },
+            "a": {
+              "a": 0,
+              "c": 7,
+              "d": false
+            }
+          }
+        ],
+        "alpha": {
+          "c": "value",
+          "a": [],
+          "b": {
+            "a": [
+              null,
+              true
+            ]
+          }
+        }
+      },
+      "overrides": {
+        "delta": [],
+        "alpha": {
+          "b": false,
+          "d": {},
+          "c": {}
+        }
+      },
+      "expected": {
+        "gamma": [
+          {
+            "b": [
+              7,
+              0
+            ],
+            "d": {
+              "b": 7,
+              "d": true,
+              "c": false
+            },
+            "c": [
+              null,
+              7,
+              "value"
+            ]
+          },
+          {
+            "c": {
+              "a": null,
+              "d": 0,
+              "c": ""
+            },
+            "a": {
+              "a": 0,
+              "c": 7,
+              "d": false
+            }
+          }
+        ],
+        "alpha": {
+          "c": {},
+          "a": [],
+          "b": false,
+          "d": {}
+        },
+        "delta": []
+      }
+    },
+    {
+      "base": {
+        "alpha": "value"
+      },
+      "overrides": {
+        "beta": ""
+      },
+      "expected": {
+        "alpha": "value",
+        "beta": ""
+      }
+    },
+    {
+      "base": {},
+      "overrides": {
+        "beta": ""
+      },
+      "expected": {
+        "beta": ""
+      }
+    },
+    {
+      "base": {
+        "beta": [
+          {
+            "a": {
+              "c": false,
+              "a": 0
+            },
+            "c": false
+          },
+          {
+            "b": [
+              null
+            ],
+            "a": {
+              "b": "value"
+            }
+          },
+          [
+            "value"
+          ]
+        ]
+      },
+      "overrides": {
+        "delta": {
+          "d": {
+            "a": {
+              "c": "",
+              "b": 7,
+              "a": null
+            },
+            "c": {}
+          },
+          "a": [
+            [
+              0,
+              null,
+              "value"
+            ],
+            [
+              "",
+              false,
+              ""
+            ]
+          ],
+          "b": null
+        },
+        "beta": "value",
+        "alpha": {
+          "b": {
+            "b": [
+              true,
+              "value"
+            ],
+            "c": {
+              "a": "value",
+              "b": "",
+              "c": "value"
+            },
+            "a": null,
+            "d": false
+          }
+        }
+      },
+      "expected": {
+        "beta": "value",
+        "delta": {
+          "d": {
+            "a": {
+              "c": "",
+              "b": 7,
+              "a": null
+            },
+            "c": {}
+          },
+          "a": [
+            [
+              0,
+              null,
+              "value"
+            ],
+            [
+              "",
+              false,
+              ""
+            ]
+          ],
+          "b": null
+        },
+        "alpha": {
+          "b": {
+            "b": [
+              true,
+              "value"
+            ],
+            "c": {
+              "a": "value",
+              "b": "",
+              "c": "value"
+            },
+            "a": null,
+            "d": false
+          }
+        }
+      }
+    },
+    {
+      "base": {
+        "alpha": [
+          [
+            {
+              "b": true,
+              "d": 0,
+              "c": "value"
+            },
+            {
+              "a": false
+            }
+          ],
+          null
+        ],
+        "gamma": false,
+        "beta": {}
+      },
+      "overrides": {
+        "alpha": [
+          [
+            {
+              "b": null
+            }
+          ],
+          {}
+        ]
+      },
+      "expected": {
+        "alpha": [
+          [
+            {
+              "b": null
+            }
+          ],
+          {}
+        ],
+        "gamma": false,
+        "beta": {}
+      }
+    },
+    {
+      "base": {
+        "alpha": {
+          "b": {
+            "a": {
+              "b": false,
+              "c": 7,
+              "a": ""
+            },
+            "d": {}
+          },
+          "a": [
+            {
+              "d": 7
+            },
+            {
+              "b": 7
+            }
+          ],
+          "d": false,
+          "c": "value"
+        },
+        "beta": [
+          [
+            {
+              "c": false,
+              "d": "value"
+            },
+            [
+              false,
+              ""
+            ]
+          ]
+        ],
+        "gamma": ""
+      },
+      "overrides": {
+        "alpha": []
+      },
+      "expected": {
+        "alpha": [],
+        "beta": [
+          [
+            {
+              "c": false,
+              "d": "value"
+            },
+            [
+              false,
+              ""
+            ]
+          ]
+        ],
+        "gamma": ""
+      }
+    },
+    {
+      "base": {},
+      "overrides": {
+        "alpha": {
+          "c": {
+            "c": {
+              "c": true,
+              "d": ""
+            },
+            "a": {
+              "c": true,
+              "d": "",
+              "b": 7,
+              "a": ""
+            }
+          }
+        }
+      },
+      "expected": {
+        "alpha": {
+          "c": {
+            "c": {
+              "c": true,
+              "d": ""
+            },
+            "a": {
+              "c": true,
+              "d": "",
+              "b": 7,
+              "a": ""
+            }
+          }
+        }
+      }
+    },
+    {
+      "base": {
+        "gamma": {
+          "b": true,
+          "a": [
+            true
+          ]
+        }
+      },
+      "overrides": {
+        "alpha": [],
+        "delta": {
+          "d": {},
+          "c": {
+            "a": null,
+            "d": 7,
+            "c": {},
+            "b": [
+              true
+            ]
+          }
+        }
+      },
+      "expected": {
+        "gamma": {
+          "b": true,
+          "a": [
+            true
+          ]
+        },
+        "alpha": [],
+        "delta": {
+          "d": {},
+          "c": {
+            "a": null,
+            "d": 7,
+            "c": {},
+            "b": [
+              true
+            ]
+          }
+        }
+      }
+    },
+    {
+      "base": {
+        "alpha": true,
+        "gamma": {}
+      },
+      "overrides": {},
+      "expected": {
+        "alpha": true,
+        "gamma": {}
+      }
+    },
+    {
+      "base": {
+        "alpha": [
+          {
+            "b": false
+          },
+          0
+        ],
+        "beta": [
+          {
+            "c": false,
+            "b": {
+              "a": false,
+              "c": 7,
+              "d": true
+            },
+            "a": [
+              true,
+              0
+            ]
+          }
+        ]
+      },
+      "overrides": {
+        "delta": [
+          null,
+          [
+            0,
+            {
+              "c": ""
+            },
+            7
+          ],
+          7
+        ],
+        "beta": "value",
+        "alpha": {
+          "a": [
+            {}
+          ],
+          "b": 7
+        }
+      },
+      "expected": {
+        "alpha": {
+          "a": [
+            {}
+          ],
+          "b": 7
+        },
+        "beta": "value",
+        "delta": [
+          null,
+          [
+            0,
+            {
+              "c": ""
+            },
+            7
+          ],
+          7
+        ]
+      }
+    },
+    {
+      "base": {
+        "beta": [
+          {
+            "d": "value",
+            "b": [
+              false
+            ],
+            "a": []
+          },
+          false
+        ]
+      },
+      "overrides": {},
+      "expected": {
+        "beta": [
+          {
+            "d": "value",
+            "b": [
+              false
+            ],
+            "a": []
+          },
+          false
+        ]
+      }
+    },
+    {
+      "base": {},
+      "overrides": {
+        "beta": null,
+        "alpha": true
+      },
+      "expected": {
+        "beta": null,
+        "alpha": true
+      }
+    },
+    {
+      "base": {
+        "beta": [],
+        "alpha": 7
+      },
+      "overrides": {
+        "delta": []
+      },
+      "expected": {
+        "beta": [],
+        "alpha": 7,
+        "delta": []
+      }
+    }
+  ],
+  "writable": [
+    "src/config.py"
+  ],
+  "readonly": [],
+  "oracle": {
+    "cases": [
+      {
+        "base": {
+          "alpha": []
+        },
+        "overrides": {
+          "alpha": {
+            "a": false
+          }
+        },
+        "expected": {
+          "alpha": {
+            "a": false
+          }
+        }
+      },
+      {
+        "base": {
+          "gamma": {
+            "c": false,
+            "b": [
+              [
+                false,
+                false
+              ],
+              null
+            ],
+            "a": [],
+            "d": []
+          },
+          "beta": {
+            "c": {
+              "b": 0,
+              "c": []
+            },
+            "b": "",
+            "a": [
+              [
+                "",
+                "value"
+              ],
+              [],
+              null
+            ],
+            "d": []
+          }
+        },
+        "overrides": {},
+        "expected": {
+          "gamma": {
+            "c": false,
+            "b": [
+              [
+                false,
+                false
+              ],
+              null
+            ],
+            "a": [],
+            "d": []
+          },
+          "beta": {
+            "c": {
+              "b": 0,
+              "c": []
+            },
+            "b": "",
+            "a": [
+              [
+                "",
+                "value"
+              ],
+              [],
+              null
+            ],
+            "d": []
+          }
+        }
+      },
+      {
+        "base": {},
+        "overrides": {
+          "beta": [
+            []
+          ],
+          "delta": {
+            "c": {
+              "a": {
+                "a": 0,
+                "d": 0,
+                "c": 7,
+                "b": false
+              },
+              "b": [
+                "",
+                true
+              ],
+              "d": []
+            },
+            "b": {
+              "a": true,
+              "c": {},
+              "d": 7
+            }
+          }
+        },
+        "expected": {
+          "beta": [
+            []
+          ],
+          "delta": {
+            "c": {
+              "a": {
+                "a": 0,
+                "d": 0,
+                "c": 7,
+                "b": false
+              },
+              "b": [
+                "",
+                true
+              ],
+              "d": []
+            },
+            "b": {
+              "a": true,
+              "c": {},
+              "d": 7
+            }
+          }
+        }
+      },
+      {
+        "base": {
+          "alpha": [
+            null,
+            {
+              "b": 7,
+              "d": 7,
+              "a": [
+                true,
+                7,
+                7
+              ],
+              "c": true
+            }
+          ],
+          "beta": 0
+        },
+        "overrides": {
+          "alpha": [
+            {},
+            {}
+          ],
+          "delta": [
+            "",
+            7,
+            [
+              false,
+              ""
+            ]
+          ],
+          "beta": {
+            "c": {
+              "b": "value",
+              "d": {
+                "c": null,
+                "d": 0
+              }
+            },
+            "d": [
+              {
+                "a": "value",
+                "c": false,
+                "d": true
+              }
+            ]
+          }
+        },
+        "expected": {
+          "alpha": [
+            {},
+            {}
+          ],
+          "beta": {
+            "c": {
+              "b": "value",
+              "d": {
+                "c": null,
+                "d": 0
+              }
+            },
+            "d": [
+              {
+                "a": "value",
+                "c": false,
+                "d": true
+              }
+            ]
+          },
+          "delta": [
+            "",
+            7,
+            [
+              false,
+              ""
+            ]
+          ]
+        }
+      },
+      {
+        "base": {
+          "beta": [
+            {
+              "d": "",
+              "a": [
+                true,
+                ""
+              ],
+              "c": {
+                "d": 0
+              }
+            },
+            [
+              null,
+              [
+                "value",
+                false
+              ]
+            ]
+          ],
+          "gamma": [
+            {},
+            [],
+            [
+              [
+                7,
+                ""
+              ],
+              {},
+              7
+            ]
+          ],
+          "alpha": ""
+        },
+        "overrides": {
+          "delta": {
+            "c": [
+              [
+                true,
+                0,
+                null
+              ]
+            ],
+            "a": "",
+            "b": null
+          },
+          "beta": {
+            "c": {},
+            "d": 7
+          }
+        },
+        "expected": {
+          "beta": {
+            "c": {},
+            "d": 7
+          },
+          "gamma": [
+            {},
+            [],
+            [
+              [
+                7,
+                ""
+              ],
+              {},
+              7
+            ]
+          ],
+          "alpha": "",
+          "delta": {
+            "c": [
+              [
+                true,
+                0,
+                null
+              ]
+            ],
+            "a": "",
+            "b": null
+          }
+        }
+      },
+      {
+        "base": {
+          "alpha": {
+            "d": [
+              true,
+              [
+                false
+              ],
+              {}
+            ]
+          },
+          "gamma": {
+            "a": [
+              []
+            ],
+            "b": null,
+            "d": [
+              {
+                "d": "",
+                "b": true
+              },
+              [],
+              [
+                false,
+                0,
+                7
+              ]
+            ],
+            "c": {
+              "d": {
+                "a": "value",
+                "c": false,
+                "d": 7
+              },
+              "a": false,
+              "c": "",
+              "b": {
+                "d": true,
+                "c": false
+              }
+            }
+          }
+        },
+        "overrides": {
+          "delta": 0,
+          "beta": {}
+        },
+        "expected": {
+          "alpha": {
+            "d": [
+              true,
+              [
+                false
+              ],
+              {}
+            ]
+          },
+          "gamma": {
+            "a": [
+              []
+            ],
+            "b": null,
+            "d": [
+              {
+                "d": "",
+                "b": true
+              },
+              [],
+              [
+                false,
+                0,
+                7
+              ]
+            ],
+            "c": {
+              "d": {
+                "a": "value",
+                "c": false,
+                "d": 7
+              },
+              "a": false,
+              "c": "",
+              "b": {
+                "d": true,
+                "c": false
+              }
+            }
+          },
+          "delta": 0,
+          "beta": {}
+        }
+      },
+      {
+        "base": {
+          "alpha": true,
+          "gamma": {
+            "c": {
+              "c": null,
+              "d": {
+                "b": true,
+                "a": 7,
+                "d": 0
+              }
+            },
+            "a": {
+              "c": [
+                "",
+                true,
+                true
+              ],
+              "a": null,
+              "b": 0,
+              "d": [
+                7
+              ]
+            },
+            "d": {
+              "c": {
+                "c": ""
+              },
+              "d": "value"
+            },
+            "b": [
+              "value",
+              [
+                "value",
+                "value",
+                true
+              ],
+              {}
+            ]
+          }
+        },
+        "overrides": {},
+        "expected": {
+          "alpha": true,
+          "gamma": {
+            "c": {
+              "c": null,
+              "d": {
+                "b": true,
+                "a": 7,
+                "d": 0
+              }
+            },
+            "a": {
+              "c": [
+                "",
+                true,
+                true
+              ],
+              "a": null,
+              "b": 0,
+              "d": [
+                7
+              ]
+            },
+            "d": {
+              "c": {
+                "c": ""
+              },
+              "d": "value"
+            },
+            "b": [
+              "value",
+              [
+                "value",
+                "value",
+                true
+              ],
+              {}
+            ]
+          }
+        }
+      },
+      {
+        "base": {
+          "beta": [
+            {
+              "c": [
+                "value",
+                true,
+                ""
+              ],
+              "b": {
+                "a": null
+              },
+              "d": false,
+              "a": ""
+            },
+            "",
+            [
+              [
+                7,
+                false,
+                7
+              ],
+              null
+            ]
+          ],
+          "alpha": "value"
+        },
+        "overrides": {
+          "alpha": [
+            [],
+            {},
+            {
+              "c": [
+                0
+              ]
+            }
+          ]
+        },
+        "expected": {
+          "beta": [
+            {
+              "c": [
+                "value",
+                true,
+                ""
+              ],
+              "b": {
+                "a": null
+              },
+              "d": false,
+              "a": ""
+            },
+            "",
+            [
+              [
+                7,
+                false,
+                7
+              ],
+              null
+            ]
+          ],
+          "alpha": [
+            [],
+            {},
+            {
+              "c": [
+                0
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "base": {
+          "alpha": [
+            [
+              [
+                "",
+                false
+              ],
+              []
+            ],
+            {
+              "b": []
+            },
+            [
+              [
+                ""
+              ],
+              {}
+            ]
+          ],
+          "gamma": {},
+          "beta": [
+            {
+              "b": [
+                null,
+                true
+              ],
+              "d": null
+            },
+            {}
+          ]
+        },
+        "overrides": {
+          "alpha": [],
+          "delta": 7,
+          "beta": {
+            "c": null,
+            "d": {
+              "c": [
+                0,
+                0,
+                true
+              ]
+            },
+            "b": [
+              {
+                "d": "value",
+                "a": true
+              }
+            ]
+          }
+        },
+        "expected": {
+          "alpha": [],
+          "gamma": {},
+          "beta": {
+            "c": null,
+            "d": {
+              "c": [
+                0,
+                0,
+                true
+              ]
+            },
+            "b": [
+              {
+                "d": "value",
+                "a": true
+              }
+            ]
+          },
+          "delta": 7
+        }
+      },
+      {
+        "base": {},
+        "overrides": {
+          "delta": [
+            [],
+            {
+              "d": {
+                "c": "value"
+              },
+              "c": [
+                7,
+                false
+              ],
+              "a": [
+                true,
+                null
+              ]
+            },
+            [
+              [
+                null,
+                true,
+                true
+              ],
+              {
+                "a": ""
+              },
+              [
+                true,
+                true,
+                null
+              ]
+            ]
+          ],
+          "alpha": [
+            "",
+            "value",
+            {
+              "d": "",
+              "c": {
+                "b": 7,
+                "a": false
+              },
+              "b": [
+                "",
+                false
+              ]
+            }
+          ],
+          "beta": []
+        },
+        "expected": {
+          "delta": [
+            [],
+            {
+              "d": {
+                "c": "value"
+              },
+              "c": [
+                7,
+                false
+              ],
+              "a": [
+                true,
+                null
+              ]
+            },
+            [
+              [
+                null,
+                true,
+                true
+              ],
+              {
+                "a": ""
+              },
+              [
+                true,
+                true,
+                null
+              ]
+            ]
+          ],
+          "alpha": [
+            "",
+            "value",
+            {
+              "d": "",
+              "c": {
+                "b": 7,
+                "a": false
+              },
+              "b": [
+                "",
+                false
+              ]
+            }
+          ],
+          "beta": []
+        }
+      },
+      {
+        "base": {},
+        "overrides": {
+          "delta": {
+            "d": ""
+          },
+          "beta": "value",
+          "alpha": []
+        },
+        "expected": {
+          "delta": {
+            "d": ""
+          },
+          "beta": "value",
+          "alpha": []
+        }
+      },
+      {
+        "base": {
+          "alpha": {},
+          "beta": [
+            {
+              "b": {
+                "d": false,
+                "b": "value",
+                "c": 7
+              }
+            },
+            [],
+            true
+          ]
+        },
+        "overrides": {
+          "alpha": {}
+        },
+        "expected": {
+          "alpha": {},
+          "beta": [
+            {
+              "b": {
+                "d": false,
+                "b": "value",
+                "c": 7
+              }
+            },
+            [],
+            true
+          ]
+        }
+      },
+      {
+        "base": {
+          "beta": false,
+          "alpha": false,
+          "gamma": [
+            [
+              [
+                7
+              ]
+            ]
+          ]
+        },
+        "overrides": {},
+        "expected": {
+          "beta": false,
+          "alpha": false,
+          "gamma": [
+            [
+              [
+                7
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "base": {
+          "alpha": null,
+          "beta": true,
+          "gamma": []
+        },
+        "overrides": {
+          "beta": [
+            {
+              "a": [],
+              "d": {},
+              "b": {
+                "c": "value",
+                "a": true,
+                "b": 7,
+                "d": ""
+              }
+            },
+            "value",
+            []
+          ],
+          "alpha": null,
+          "delta": {
+            "d": {},
+            "c": {
+              "d": [
+                "value",
+                7,
+                0
+              ],
+              "c": false,
+              "a": ""
+            },
+            "b": [
+              {
+                "b": null,
+                "d": "value",
+                "c": null
+              },
+              [
+                true,
+                0,
+                "value"
+              ],
+              {
+                "d": ""
+              }
+            ],
+            "a": 7
+          }
+        },
+        "expected": {
+          "alpha": null,
+          "beta": [
+            {
+              "a": [],
+              "d": {},
+              "b": {
+                "c": "value",
+                "a": true,
+                "b": 7,
+                "d": ""
+              }
+            },
+            "value",
+            []
+          ],
+          "gamma": [],
+          "delta": {
+            "d": {},
+            "c": {
+              "d": [
+                "value",
+                7,
+                0
+              ],
+              "c": false,
+              "a": ""
+            },
+            "b": [
+              {
+                "b": null,
+                "d": "value",
+                "c": null
+              },
+              [
+                true,
+                0,
+                "value"
+              ],
+              {
+                "d": ""
+              }
+            ],
+            "a": 7
+          }
+        }
+      },
+      {
+        "base": {},
+        "overrides": {},
+        "expected": {}
+      },
+      {
+        "base": {
+          "beta": {
+            "d": []
+          }
+        },
+        "overrides": {},
+        "expected": {
+          "beta": {
+            "d": []
+          }
+        }
+      },
+      {
+        "base": {},
+        "overrides": {},
+        "expected": {}
+      },
+      {
+        "base": {
+          "gamma": {
+            "d": {
+              "a": {
+                "c": false,
+                "b": 0,
+                "a": false,
+                "d": ""
+              },
+              "c": {
+                "a": false,
+                "b": null
+              },
+              "d": [
+                false,
+                true,
+                7
+              ]
+            },
+            "b": [
+              [
+                "value",
+                "",
+                ""
+              ],
+              {
+                "b": 0,
+                "d": false,
+                "c": 7,
+                "a": null
+              }
+            ]
+          },
+          "alpha": "",
+          "beta": false
+        },
+        "overrides": {
+          "beta": [],
+          "alpha": [
+            "value"
+          ],
+          "delta": {
+            "b": {
+              "a": [
+                "value",
+                7,
+                0
+              ]
+            },
+            "d": [
+              {
+                "d": "",
+                "a": ""
+              }
+            ],
+            "a": 7
+          }
+        },
+        "expected": {
+          "gamma": {
+            "d": {
+              "a": {
+                "c": false,
+                "b": 0,
+                "a": false,
+                "d": ""
+              },
+              "c": {
+                "a": false,
+                "b": null
+              },
+              "d": [
+                false,
+                true,
+                7
+              ]
+            },
+            "b": [
+              [
+                "value",
+                "",
+                ""
+              ],
+              {
+                "b": 0,
+                "d": false,
+                "c": 7,
+                "a": null
+              }
+            ]
+          },
+          "alpha": [
+            "value"
+          ],
+          "beta": [],
+          "delta": {
+            "b": {
+              "a": [
+                "value",
+                7,
+                0
+              ]
+            },
+            "d": [
+              {
+                "d": "",
+                "a": ""
+              }
+            ],
+            "a": 7
+          }
+        }
+      },
+      {
+        "base": {
+          "alpha": {
+            "b": [
+              [
+                null,
+                true,
+                ""
+              ],
+              {},
+              {
+                "b": "",
+                "d": 0,
+                "c": ""
+              }
+            ],
+            "c": 7
+          },
+          "gamma": [],
+          "beta": {}
+        },
+        "overrides": {
+          "beta": "",
+          "delta": {
+            "a": [
+              [
+                false,
+                ""
+              ],
+              [
+                false
+              ],
+              [
+                true
+              ]
+            ],
+            "d": false
+          },
+          "alpha": "value"
+        },
+        "expected": {
+          "alpha": "value",
+          "gamma": [],
+          "beta": "",
+          "delta": {
+            "a": [
+              [
+                false,
+                ""
+              ],
+              [
+                false
+              ],
+              [
+                true
+              ]
+            ],
+            "d": false
+          }
+        }
+      },
+      {
+        "base": {
+          "beta": {
+            "d": {
+              "c": {
+                "c": 0,
+                "a": "",
+                "d": 0,
+                "b": null
+              },
+              "d": 7
+            }
+          }
+        },
+        "overrides": {
+          "delta": {
+            "a": [
+              [
+                "value"
+              ],
+              {
+                "b": 7
+              }
+            ],
+            "b": {},
+            "d": [
+              7,
+              true,
+              [
+                "value",
+                true,
+                7
+              ]
+            ]
+          },
+          "alpha": null,
+          "beta": []
+        },
+        "expected": {
+          "beta": [],
+          "delta": {
+            "a": [
+              [
+                "value"
+              ],
+              {
+                "b": 7
+              }
+            ],
+            "b": {},
+            "d": [
+              7,
+              true,
+              [
+                "value",
+                true,
+                7
+              ]
+            ]
+          },
+          "alpha": null
+        }
+      },
+      {
+        "base": {
+          "alpha": {
+            "d": [
+              {
+                "d": null
+              },
+              7,
+              false
+            ],
+            "b": {
+              "b": [
+                "value",
+                true
+              ],
+              "a": {}
+            },
+            "c": {
+              "c": {
+                "d": true
+              }
+            }
+          }
+        },
+        "overrides": {
+          "beta": false,
+          "alpha": {
+            "d": {
+              "a": true,
+              "b": 7,
+              "d": [
+                false,
+                "",
+                7
+              ],
+              "c": [
+                "value",
+                0,
+                false
+              ]
+            }
+          }
+        },
+        "expected": {
+          "alpha": {
+            "d": {
+              "a": true,
+              "b": 7,
+              "d": [
+                false,
+                "",
+                7
+              ],
+              "c": [
+                "value",
+                0,
+                false
+              ]
+            },
+            "b": {
+              "b": [
+                "value",
+                true
+              ],
+              "a": {}
+            },
+            "c": {
+              "c": {
+                "d": true
+              }
+            }
+          },
+          "beta": false
+        }
+      },
+      {
+        "base": {
+          "gamma": {},
+          "alpha": "",
+          "beta": 0
+        },
+        "overrides": {
+          "alpha": {
+            "a": {},
+            "b": {}
+          },
+          "delta": [
+            {
+              "d": {
+                "c": "value",
+                "a": false,
+                "b": null,
+                "d": ""
+              },
+              "c": {
+                "b": "value",
+                "a": 0
+              },
+              "b": {
+                "c": 7,
+                "d": 0
+              },
+              "a": {
+                "d": false,
+                "b": false,
+                "c": 7,
+                "a": true
+              }
+            },
+            [
+              {
+                "c": 0,
+                "d": null,
+                "b": true,
+                "a": null
+              },
+              false
+            ]
+          ],
+          "beta": {}
+        },
+        "expected": {
+          "gamma": {},
+          "alpha": {
+            "a": {},
+            "b": {}
+          },
+          "beta": {},
+          "delta": [
+            {
+              "d": {
+                "c": "value",
+                "a": false,
+                "b": null,
+                "d": ""
+              },
+              "c": {
+                "b": "value",
+                "a": 0
+              },
+              "b": {
+                "c": 7,
+                "d": 0
+              },
+              "a": {
+                "d": false,
+                "b": false,
+                "c": 7,
+                "a": true
+              }
+            },
+            [
+              {
+                "c": 0,
+                "d": null,
+                "b": true,
+                "a": null
+              },
+              false
+            ]
+          ]
+        }
+      },
+      {
+        "base": {},
+        "overrides": {},
+        "expected": {}
+      },
+      {
+        "base": {},
+        "overrides": {},
+        "expected": {}
+      },
+      {
+        "base": {
+          "beta": [],
+          "gamma": [
+            [
+              0,
+              "value"
+            ],
+            true
+          ],
+          "alpha": {
+            "b": [
+              {
+                "c": 7,
+                "a": "",
+                "d": "value"
+              }
+            ],
+            "c": false,
+            "d": 0
+          }
+        },
+        "overrides": {
+          "alpha": 7,
+          "delta": {
+            "a": ""
+          }
+        },
+        "expected": {
+          "beta": [],
+          "gamma": [
+            [
+              0,
+              "value"
+            ],
+            true
+          ],
+          "alpha": 7,
+          "delta": {
+            "a": ""
+          }
+        }
+      },
+      {
+        "base": {
+          "beta": 7,
+          "gamma": [
+            {
+              "b": [
+                "value",
+                7
+              ],
+              "a": ""
+            },
+            {
+              "a": {}
+            },
+            {
+              "a": [
+                true
+              ],
+              "d": null
+            }
+          ],
+          "alpha": {
+            "b": "value",
+            "a": false
+          }
+        },
+        "overrides": {
+          "alpha": {
+            "c": [
+              0,
+              "value"
+            ],
+            "d": {
+              "a": []
+            },
+            "a": {
+              "b": [
+                null,
+                true,
+                false
+              ],
+              "a": null,
+              "c": true
+            },
+            "b": [
+              [
+                "value",
+                7,
+                true
+              ]
+            ]
+          }
+        },
+        "expected": {
+          "beta": 7,
+          "gamma": [
+            {
+              "b": [
+                "value",
+                7
+              ],
+              "a": ""
+            },
+            {
+              "a": {}
+            },
+            {
+              "a": [
+                true
+              ],
+              "d": null
+            }
+          ],
+          "alpha": {
+            "b": [
+              [
+                "value",
+                7,
+                true
+              ]
+            ],
+            "a": {
+              "b": [
+                null,
+                true,
+                false
+              ],
+              "a": null,
+              "c": true
+            },
+            "c": [
+              0,
+              "value"
+            ],
+            "d": {
+              "a": []
+            }
+          }
+        }
+      },
+      {
+        "base": {},
+        "overrides": {
+          "alpha": true,
+          "delta": {
+            "c": {
+              "b": 0
+            },
+            "a": [
+              ""
+            ],
+            "d": {
+              "d": "value",
+              "b": 7
+            },
+            "b": {
+              "c": "",
+              "a": 0
+            }
+          }
+        },
+        "expected": {
+          "alpha": true,
+          "delta": {
+            "c": {
+              "b": 0
+            },
+            "a": [
+              ""
+            ],
+            "d": {
+              "d": "value",
+              "b": 7
+            },
+            "b": {
+              "c": "",
+              "a": 0
+            }
+          }
+        }
+      },
+      {
+        "base": {
+          "gamma": [
+            {
+              "b": [
+                7,
+                0
+              ],
+              "d": {
+                "b": 7,
+                "d": true,
+                "c": false
+              },
+              "c": [
+                null,
+                7,
+                "value"
+              ]
+            },
+            {
+              "c": {
+                "a": null,
+                "d": 0,
+                "c": ""
+              },
+              "a": {
+                "a": 0,
+                "c": 7,
+                "d": false
+              }
+            }
+          ],
+          "alpha": {
+            "c": "value",
+            "a": [],
+            "b": {
+              "a": [
+                null,
+                true
+              ]
+            }
+          }
+        },
+        "overrides": {
+          "delta": [],
+          "alpha": {
+            "b": false,
+            "d": {},
+            "c": {}
+          }
+        },
+        "expected": {
+          "gamma": [
+            {
+              "b": [
+                7,
+                0
+              ],
+              "d": {
+                "b": 7,
+                "d": true,
+                "c": false
+              },
+              "c": [
+                null,
+                7,
+                "value"
+              ]
+            },
+            {
+              "c": {
+                "a": null,
+                "d": 0,
+                "c": ""
+              },
+              "a": {
+                "a": 0,
+                "c": 7,
+                "d": false
+              }
+            }
+          ],
+          "alpha": {
+            "c": {},
+            "a": [],
+            "b": false,
+            "d": {}
+          },
+          "delta": []
+        }
+      },
+      {
+        "base": {
+          "alpha": "value"
+        },
+        "overrides": {
+          "beta": ""
+        },
+        "expected": {
+          "alpha": "value",
+          "beta": ""
+        }
+      },
+      {
+        "base": {},
+        "overrides": {
+          "beta": ""
+        },
+        "expected": {
+          "beta": ""
+        }
+      },
+      {
+        "base": {
+          "beta": [
+            {
+              "a": {
+                "c": false,
+                "a": 0
+              },
+              "c": false
+            },
+            {
+              "b": [
+                null
+              ],
+              "a": {
+                "b": "value"
+              }
+            },
+            [
+              "value"
+            ]
+          ]
+        },
+        "overrides": {
+          "delta": {
+            "d": {
+              "a": {
+                "c": "",
+                "b": 7,
+                "a": null
+              },
+              "c": {}
+            },
+            "a": [
+              [
+                0,
+                null,
+                "value"
+              ],
+              [
+                "",
+                false,
+                ""
+              ]
+            ],
+            "b": null
+          },
+          "beta": "value",
+          "alpha": {
+            "b": {
+              "b": [
+                true,
+                "value"
+              ],
+              "c": {
+                "a": "value",
+                "b": "",
+                "c": "value"
+              },
+              "a": null,
+              "d": false
+            }
+          }
+        },
+        "expected": {
+          "beta": "value",
+          "delta": {
+            "d": {
+              "a": {
+                "c": "",
+                "b": 7,
+                "a": null
+              },
+              "c": {}
+            },
+            "a": [
+              [
+                0,
+                null,
+                "value"
+              ],
+              [
+                "",
+                false,
+                ""
+              ]
+            ],
+            "b": null
+          },
+          "alpha": {
+            "b": {
+              "b": [
+                true,
+                "value"
+              ],
+              "c": {
+                "a": "value",
+                "b": "",
+                "c": "value"
+              },
+              "a": null,
+              "d": false
+            }
+          }
+        }
+      },
+      {
+        "base": {
+          "alpha": [
+            [
+              {
+                "b": true,
+                "d": 0,
+                "c": "value"
+              },
+              {
+                "a": false
+              }
+            ],
+            null
+          ],
+          "gamma": false,
+          "beta": {}
+        },
+        "overrides": {
+          "alpha": [
+            [
+              {
+                "b": null
+              }
+            ],
+            {}
+          ]
+        },
+        "expected": {
+          "alpha": [
+            [
+              {
+                "b": null
+              }
+            ],
+            {}
+          ],
+          "gamma": false,
+          "beta": {}
+        }
+      },
+      {
+        "base": {
+          "alpha": {
+            "b": {
+              "a": {
+                "b": false,
+                "c": 7,
+                "a": ""
+              },
+              "d": {}
+            },
+            "a": [
+              {
+                "d": 7
+              },
+              {
+                "b": 7
+              }
+            ],
+            "d": false,
+            "c": "value"
+          },
+          "beta": [
+            [
+              {
+                "c": false,
+                "d": "value"
+              },
+              [
+                false,
+                ""
+              ]
+            ]
+          ],
+          "gamma": ""
+        },
+        "overrides": {
+          "alpha": []
+        },
+        "expected": {
+          "alpha": [],
+          "beta": [
+            [
+              {
+                "c": false,
+                "d": "value"
+              },
+              [
+                false,
+                ""
+              ]
+            ]
+          ],
+          "gamma": ""
+        }
+      },
+      {
+        "base": {},
+        "overrides": {
+          "alpha": {
+            "c": {
+              "c": {
+                "c": true,
+                "d": ""
+              },
+              "a": {
+                "c": true,
+                "d": "",
+                "b": 7,
+                "a": ""
+              }
+            }
+          }
+        },
+        "expected": {
+          "alpha": {
+            "c": {
+              "c": {
+                "c": true,
+                "d": ""
+              },
+              "a": {
+                "c": true,
+                "d": "",
+                "b": 7,
+                "a": ""
+              }
+            }
+          }
+        }
+      },
+      {
+        "base": {
+          "gamma": {
+            "b": true,
+            "a": [
+              true
+            ]
+          }
+        },
+        "overrides": {
+          "alpha": [],
+          "delta": {
+            "d": {},
+            "c": {
+              "a": null,
+              "d": 7,
+              "c": {},
+              "b": [
+                true
+              ]
+            }
+          }
+        },
+        "expected": {
+          "gamma": {
+            "b": true,
+            "a": [
+              true
+            ]
+          },
+          "alpha": [],
+          "delta": {
+            "d": {},
+            "c": {
+              "a": null,
+              "d": 7,
+              "c": {},
+              "b": [
+                true
+              ]
+            }
+          }
+        }
+      },
+      {
+        "base": {
+          "alpha": true,
+          "gamma": {}
+        },
+        "overrides": {},
+        "expected": {
+          "alpha": true,
+          "gamma": {}
+        }
+      },
+      {
+        "base": {
+          "alpha": [
+            {
+              "b": false
+            },
+            0
+          ],
+          "beta": [
+            {
+              "c": false,
+              "b": {
+                "a": false,
+                "c": 7,
+                "d": true
+              },
+              "a": [
+                true,
+                0
+              ]
+            }
+          ]
+        },
+        "overrides": {
+          "delta": [
+            null,
+            [
+              0,
+              {
+                "c": ""
+              },
+              7
+            ],
+            7
+          ],
+          "beta": "value",
+          "alpha": {
+            "a": [
+              {}
+            ],
+            "b": 7
+          }
+        },
+        "expected": {
+          "alpha": {
+            "a": [
+              {}
+            ],
+            "b": 7
+          },
+          "beta": "value",
+          "delta": [
+            null,
+            [
+              0,
+              {
+                "c": ""
+              },
+              7
+            ],
+            7
+          ]
+        }
+      },
+      {
+        "base": {
+          "beta": [
+            {
+              "d": "value",
+              "b": [
+                false
+              ],
+              "a": []
+            },
+            false
+          ]
+        },
+        "overrides": {},
+        "expected": {
+          "beta": [
+            {
+              "d": "value",
+              "b": [
+                false
+              ],
+              "a": []
+            },
+            false
+          ]
+        }
+      },
+      {
+        "base": {},
+        "overrides": {
+          "beta": null,
+          "alpha": true
+        },
+        "expected": {
+          "beta": null,
+          "alpha": true
+        }
+      },
+      {
+        "base": {
+          "beta": [],
+          "alpha": 7
+        },
+        "overrides": {
+          "delta": []
+        },
+        "expected": {
+          "beta": [],
+          "alpha": 7,
+          "delta": []
+        }
+      }
+    ],
+    "public_count": 2,
+    "hidden_count": 8
+  },
+  "allowed_tools": [
+    "list_files",
+    "read_file",
+    "write_file",
+    "apply_patch",
+    "run_tests"
+  ]
+}

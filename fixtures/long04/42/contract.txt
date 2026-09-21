@@ -1,0 +1,21 @@
+Repair ONLY src/request.ts in one final write_file with complete source.
+Preserve requestWithRetry(transport,url,options):Promise<Response> and
+exported Response {status:number;body:string}, Transport taking
+{url:string;method:"GET"|"POST";headers:Record<string,string>}, Options
+{method:"GET"|"POST";maxAttempts:number;baseDelayMs:number;
+sleep:(ms:number)=>Promise<void>;idempotencyKey?:string}.
+src/errors.ts exports TimeoutError and is a READ-ONLY dependency.
+Active signed early contract: maxAttempts positive integer; baseDelayMs
+finite >=0. Validate before transport, including unsafe POST.
+Active signed middle policy: retry only GET or POST with a nonempty
+idempotencyKey; whitespace-only is empty. POST with a valid key sends
+Idempotency-Key on EVERY attempt, exactly as supplied without trimming.
+Active signed late policy: retry only HTTP 429/503 or TimeoutError; other
+thrown errors propagate immediately. Sleep before the next attempt with
+baseDelayMs*2**failure_index (first failure index 0), never after last.
+Return final HTTP response unchanged, including final 429/503. Propagate
+the final TimeoutError object. Unsafe POST uses one attempt. Each attempt
+gets fresh request/header objects with same URL/method. Mutate no options.
+Active contracts outrank explicitly obsolete/example/unrelated material.
+
+The three ACTIVE SIGNED documents outrank all explicitly obsolete, example and unrelated material. Exactly one final write_file action, no read/test turns, at most 4096 generated tokens.

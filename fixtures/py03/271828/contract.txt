@@ -1,0 +1,1 @@
+Repair src/config.py: overlay_config(base: dict, overrides: dict) -> dict for JSON-like trees. Recursively merge only dict/dict values. Override lists replace lists. Every other override replaces, including False, 0, empty string and None. Retain one-side keys. Return a fully independent deep structure sharing no mutable descendant with either unchanged input.

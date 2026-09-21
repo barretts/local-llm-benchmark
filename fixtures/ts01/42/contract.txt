@@ -1,0 +1,7 @@
+Repair src/cache.ts. Preserve exported AsyncTTLCache<V>, constructor(loader:
+(key:string)=>Promise<V>, ttlMs:number, now:()=>number), get(key):Promise<V>
+and invalidate(key):void. TTL must be finite >0. Concurrent gets for one key
+coalesce. TTL starts on resolution and expires at now >= resolution + ttlMs.
+Failed loads are never cached. Invalidation permits existing waiters to
+resolve but their stale load cannot populate the cache; a later get starts
+a new load. Keys are independent. No generic value cloning is required.

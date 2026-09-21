@@ -1,0 +1,7 @@
+Repair src/graph.ts and preserve topologicalOrder(graph:
+Readonly<Record<string,readonly string[]>>):string[]. A key lists its
+prerequisites. Include undeclared dependency names; deduplicate edges.
+At every step choose the lexically smallest CURRENTLY ready name with
+deterministic < / > comparison. Prerequisites precede dependents. Any
+cycle including self-cycle throws. Do not mutate input. Use own properties
+and safe maps so prototype-like names are ordinary names.

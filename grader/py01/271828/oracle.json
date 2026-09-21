@@ -1,0 +1,867 @@
+{
+  "cases": {
+    "capacity": 4,
+    "default_ttl": 3,
+    "trace": [
+      {
+        "op": "len",
+        "now": 0,
+        "expected": 0
+      },
+      {
+        "op": "put",
+        "now": 0,
+        "key": "a",
+        "value": {
+          "n": [
+            -53,
+            {
+              "step": 1
+            }
+          ]
+        },
+        "ttl": null
+      },
+      {
+        "op": "get",
+        "now": 0,
+        "key": "e",
+        "expected": null
+      },
+      {
+        "op": "put",
+        "now": 2,
+        "key": "e",
+        "value": {
+          "n": [
+            -5,
+            {
+              "step": 3
+            }
+          ]
+        },
+        "ttl": 3
+      },
+      {
+        "op": "len",
+        "now": 2,
+        "expected": 2
+      },
+      {
+        "op": "len",
+        "now": 2,
+        "expected": 2
+      },
+      {
+        "op": "get",
+        "now": 3,
+        "key": "b",
+        "expected": null
+      },
+      {
+        "op": "put",
+        "now": 3,
+        "key": "d",
+        "value": {
+          "n": [
+            69,
+            {
+              "step": 7
+            }
+          ]
+        },
+        "ttl": null
+      },
+      {
+        "op": "put",
+        "now": 4,
+        "key": "b",
+        "value": {
+          "n": [
+            35,
+            {
+              "step": 8
+            }
+          ]
+        },
+        "ttl": 3
+      },
+      {
+        "op": "put",
+        "now": 5,
+        "key": "a",
+        "value": {
+          "n": [
+            -89,
+            {
+              "step": 9
+            }
+          ]
+        },
+        "ttl": 3
+      },
+      {
+        "op": "len",
+        "now": 5,
+        "expected": 3
+      },
+      {
+        "op": "get",
+        "now": 5,
+        "key": "d",
+        "expected": {
+          "n": [
+            69,
+            {
+              "step": 7
+            }
+          ]
+        }
+      },
+      {
+        "op": "get",
+        "now": 6,
+        "key": "c",
+        "expected": null
+      },
+      {
+        "op": "put",
+        "now": 6,
+        "key": "c",
+        "value": {
+          "n": [
+            -82,
+            {
+              "step": 13
+            }
+          ]
+        },
+        "ttl": null
+      },
+      {
+        "op": "get",
+        "now": 6,
+        "key": "c",
+        "expected": {
+          "n": [
+            -82,
+            {
+              "step": 13
+            }
+          ]
+        }
+      },
+      {
+        "op": "get",
+        "now": 7,
+        "key": "e",
+        "expected": null
+      },
+      {
+        "op": "get",
+        "now": 7,
+        "key": "a",
+        "expected": {
+          "n": [
+            -89,
+            {
+              "step": 9
+            }
+          ]
+        }
+      },
+      {
+        "op": "get",
+        "now": 7,
+        "key": "e",
+        "expected": null
+      },
+      {
+        "op": "len",
+        "now": 8,
+        "expected": 1
+      },
+      {
+        "op": "put",
+        "now": 10,
+        "key": "c",
+        "value": {
+          "n": [
+            41,
+            {
+              "step": 19
+            }
+          ]
+        },
+        "ttl": 1
+      },
+      {
+        "op": "put",
+        "now": 10,
+        "key": "a",
+        "value": {
+          "n": [
+            37,
+            {
+              "step": 20
+            }
+          ]
+        },
+        "ttl": 1
+      },
+      {
+        "op": "len",
+        "now": 10,
+        "expected": 2
+      },
+      {
+        "op": "len",
+        "now": 10,
+        "expected": 2
+      },
+      {
+        "op": "get",
+        "now": 11,
+        "key": "d",
+        "expected": null
+      },
+      {
+        "op": "put",
+        "now": 11,
+        "key": "d",
+        "value": {
+          "n": [
+            -92,
+            {
+              "step": 24
+            }
+          ]
+        },
+        "ttl": null
+      },
+      {
+        "op": "put",
+        "now": 12,
+        "key": "a",
+        "value": {
+          "n": [
+            55,
+            {
+              "step": 25
+            }
+          ]
+        },
+        "ttl": 3
+      },
+      {
+        "op": "len",
+        "now": 12,
+        "expected": 2
+      },
+      {
+        "op": "put",
+        "now": 13,
+        "key": "a",
+        "value": {
+          "n": [
+            37,
+            {
+              "step": 27
+            }
+          ]
+        },
+        "ttl": 1
+      },
+      {
+        "op": "put",
+        "now": 14,
+        "key": "e",
+        "value": {
+          "n": [
+            -33,
+            {
+              "step": 28
+            }
+          ]
+        },
+        "ttl": 7
+      },
+      {
+        "op": "get",
+        "now": 16,
+        "key": "e",
+        "expected": {
+          "n": [
+            -33,
+            {
+              "step": 28
+            }
+          ]
+        }
+      },
+      {
+        "op": "len",
+        "now": 17,
+        "expected": 1
+      },
+      {
+        "op": "put",
+        "now": 17,
+        "key": "e",
+        "value": {
+          "n": [
+            -64,
+            {
+              "step": 31
+            }
+          ]
+        },
+        "ttl": 3
+      },
+      {
+        "op": "put",
+        "now": 18,
+        "key": "a",
+        "value": {
+          "n": [
+            -62,
+            {
+              "step": 32
+            }
+          ]
+        },
+        "ttl": null
+      },
+      {
+        "op": "len",
+        "now": 19,
+        "expected": 2
+      },
+      {
+        "op": "get",
+        "now": 21,
+        "key": "b",
+        "expected": null
+      },
+      {
+        "op": "get",
+        "now": 21,
+        "key": "c",
+        "expected": null
+      },
+      {
+        "op": "get",
+        "now": 21,
+        "key": "b",
+        "expected": null
+      },
+      {
+        "op": "put",
+        "now": 23,
+        "key": "c",
+        "value": {
+          "n": [
+            -32,
+            {
+              "step": 37
+            }
+          ]
+        },
+        "ttl": null
+      },
+      {
+        "op": "get",
+        "now": 25,
+        "key": "b",
+        "expected": null
+      },
+      {
+        "op": "len",
+        "now": 25,
+        "expected": 1
+      },
+      {
+        "op": "put",
+        "now": 25,
+        "key": "c",
+        "value": {
+          "n": [
+            75,
+            {
+              "step": 40
+            }
+          ]
+        },
+        "ttl": 7
+      },
+      {
+        "op": "get",
+        "now": 26,
+        "key": "a",
+        "expected": null
+      },
+      {
+        "op": "get",
+        "now": 27,
+        "key": "a",
+        "expected": null
+      },
+      {
+        "op": "len",
+        "now": 29,
+        "expected": 1
+      },
+      {
+        "op": "len",
+        "now": 29,
+        "expected": 1
+      },
+      {
+        "op": "put",
+        "now": 30,
+        "key": "b",
+        "value": {
+          "n": [
+            3,
+            {
+              "step": 45
+            }
+          ]
+        },
+        "ttl": 7
+      },
+      {
+        "op": "get",
+        "now": 32,
+        "key": "a",
+        "expected": null
+      },
+      {
+        "op": "get",
+        "now": 33,
+        "key": "b",
+        "expected": {
+          "n": [
+            3,
+            {
+              "step": 45
+            }
+          ]
+        }
+      },
+      {
+        "op": "len",
+        "now": 35,
+        "expected": 1
+      },
+      {
+        "op": "len",
+        "now": 35,
+        "expected": 1
+      },
+      {
+        "op": "len",
+        "now": 35,
+        "expected": 1
+      },
+      {
+        "op": "get",
+        "now": 37,
+        "key": "e",
+        "expected": null
+      },
+      {
+        "op": "put",
+        "now": 37,
+        "key": "e",
+        "value": {
+          "n": [
+            44,
+            {
+              "step": 52
+            }
+          ]
+        },
+        "ttl": 3
+      },
+      {
+        "op": "put",
+        "now": 39,
+        "key": "d",
+        "value": {
+          "n": [
+            -14,
+            {
+              "step": 53
+            }
+          ]
+        },
+        "ttl": null
+      },
+      {
+        "op": "len",
+        "now": 40,
+        "expected": 1
+      },
+      {
+        "op": "len",
+        "now": 41,
+        "expected": 1
+      },
+      {
+        "op": "put",
+        "now": 43,
+        "key": "e",
+        "value": {
+          "n": [
+            87,
+            {
+              "step": 56
+            }
+          ]
+        },
+        "ttl": null
+      },
+      {
+        "op": "get",
+        "now": 43,
+        "key": "c",
+        "expected": null
+      },
+      {
+        "op": "put",
+        "now": 43,
+        "key": "e",
+        "value": {
+          "n": [
+            -5,
+            {
+              "step": 58
+            }
+          ]
+        },
+        "ttl": null
+      },
+      {
+        "op": "put",
+        "now": 43,
+        "key": "b",
+        "value": {
+          "n": [
+            21,
+            {
+              "step": 59
+            }
+          ]
+        },
+        "ttl": 3
+      },
+      {
+        "op": "get",
+        "now": 45,
+        "key": "d",
+        "expected": null
+      },
+      {
+        "op": "put",
+        "now": 45,
+        "key": "a",
+        "value": {
+          "n": [
+            -71,
+            {
+              "step": 61
+            }
+          ]
+        },
+        "ttl": null
+      },
+      {
+        "op": "len",
+        "now": 45,
+        "expected": 3
+      },
+      {
+        "op": "len",
+        "now": 45,
+        "expected": 3
+      },
+      {
+        "op": "put",
+        "now": 47,
+        "key": "a",
+        "value": {
+          "n": [
+            21,
+            {
+              "step": 64
+            }
+          ]
+        },
+        "ttl": 7
+      },
+      {
+        "op": "get",
+        "now": 47,
+        "key": "d",
+        "expected": null
+      },
+      {
+        "op": "get",
+        "now": 48,
+        "key": "c",
+        "expected": null
+      },
+      {
+        "op": "len",
+        "now": 48,
+        "expected": 1
+      },
+      {
+        "op": "len",
+        "now": 48,
+        "expected": 1
+      },
+      {
+        "op": "len",
+        "now": 48,
+        "expected": 1
+      },
+      {
+        "op": "get",
+        "now": 48,
+        "key": "a",
+        "expected": {
+          "n": [
+            21,
+            {
+              "step": 64
+            }
+          ]
+        }
+      },
+      {
+        "op": "put",
+        "now": 50,
+        "key": "e",
+        "value": {
+          "n": [
+            41,
+            {
+              "step": 71
+            }
+          ]
+        },
+        "ttl": 1
+      },
+      {
+        "op": "put",
+        "now": 50,
+        "key": "b",
+        "value": {
+          "n": [
+            -22,
+            {
+              "step": 72
+            }
+          ]
+        },
+        "ttl": 7
+      },
+      {
+        "op": "put",
+        "now": 51,
+        "key": "c",
+        "value": {
+          "n": [
+            72,
+            {
+              "step": 73
+            }
+          ]
+        },
+        "ttl": 7
+      },
+      {
+        "op": "put",
+        "now": 53,
+        "key": "a",
+        "value": {
+          "n": [
+            73,
+            {
+              "step": 74
+            }
+          ]
+        },
+        "ttl": 3
+      },
+      {
+        "op": "put",
+        "now": 53,
+        "key": "e",
+        "value": {
+          "n": [
+            -26,
+            {
+              "step": 75
+            }
+          ]
+        },
+        "ttl": null
+      },
+      {
+        "op": "put",
+        "now": 54,
+        "key": "e",
+        "value": {
+          "n": [
+            -93,
+            {
+              "step": 76
+            }
+          ]
+        },
+        "ttl": 3
+      },
+      {
+        "op": "get",
+        "now": 54,
+        "key": "c",
+        "expected": {
+          "n": [
+            72,
+            {
+              "step": 73
+            }
+          ]
+        }
+      },
+      {
+        "op": "put",
+        "now": 54,
+        "key": "d",
+        "value": {
+          "n": [
+            -60,
+            {
+              "step": 78
+            }
+          ]
+        },
+        "ttl": null
+      },
+      {
+        "op": "get",
+        "now": 56,
+        "key": "e",
+        "expected": {
+          "n": [
+            -93,
+            {
+              "step": 76
+            }
+          ]
+        }
+      },
+      {
+        "op": "put",
+        "now": 58,
+        "key": "e",
+        "value": {
+          "n": [
+            32,
+            {
+              "step": 80
+            }
+          ]
+        },
+        "ttl": 3
+      },
+      {
+        "op": "len",
+        "now": 58,
+        "expected": 1
+      },
+      {
+        "op": "len",
+        "now": 60,
+        "expected": 1
+      },
+      {
+        "op": "put",
+        "now": 61,
+        "key": "e",
+        "value": {
+          "n": [
+            3,
+            {
+              "step": 83
+            }
+          ]
+        },
+        "ttl": 3
+      },
+      {
+        "op": "put",
+        "now": 61,
+        "key": "c",
+        "value": {
+          "n": [
+            92,
+            {
+              "step": 84
+            }
+          ]
+        },
+        "ttl": 3
+      },
+      {
+        "op": "put",
+        "now": 61,
+        "key": "e",
+        "value": {
+          "n": [
+            -8,
+            {
+              "step": 85
+            }
+          ]
+        },
+        "ttl": 3
+      },
+      {
+        "op": "get",
+        "now": 63,
+        "key": "d",
+        "expected": null
+      },
+      {
+        "op": "put",
+        "now": 64,
+        "key": "a",
+        "value": {
+          "n": [
+            50,
+            {
+              "step": 87
+            }
+          ]
+        },
+        "ttl": null
+      },
+      {
+        "op": "len",
+        "now": 65,
+        "expected": 1
+      },
+      {
+        "op": "len",
+        "now": 67,
+        "expected": 0
+      }
+    ]
+  },
+  "public_count": 2,
+  "hidden_count": 8
+}

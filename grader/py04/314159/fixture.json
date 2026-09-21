@@ -1,0 +1,829 @@
+{
+  "language": "python",
+  "source": {
+    "src/retry.py": "import math\n\ndef call_with_retry(fn, *, max_attempts, base_delay, retry_on, sleep):\n    if type(max_attempts) is not int or max_attempts < 1:\n        raise ValueError(\"invalid max_attempts\")\n    try:\n        valid = not isinstance(base_delay, bool) and math.isfinite(base_delay) and base_delay >= 0\n    except (TypeError, ValueError, OverflowError):\n        valid = False\n    if not valid:\n        raise ValueError(\"invalid base_delay\")\n    for attempt in range(max_attempts):\n        try:\n            return fn()\n        except Exception:\n            sleep(base_delay * 2 ** attempt)\n            if attempt + 1 == max_attempts:\n                raise\n"
+  },
+  "gold": {
+    "src/retry.py": "import math\n\ndef call_with_retry(fn, *, max_attempts, base_delay, retry_on, sleep):\n    if type(max_attempts) is not int or max_attempts < 1:\n        raise ValueError(\"invalid max_attempts\")\n    try:\n        valid = not isinstance(base_delay, bool) and math.isfinite(base_delay) and base_delay >= 0\n    except (TypeError, ValueError, OverflowError):\n        valid = False\n    if not valid:\n        raise ValueError(\"invalid base_delay\")\n    for attempt in range(max_attempts):\n        try:\n            return fn()\n        except Exception as error:\n            if not isinstance(error, retry_on):\n                raise\n            if attempt + 1 == max_attempts:\n                raise\n            sleep(base_delay * 2 ** attempt)\n"
+  },
+  "public_tests": {
+    "test_public.py": "import unittest\nimport copy\nimport math\nimport asyncio\nfrom decimal import Decimal, ROUND_HALF_UP\nfrom src.retry import call_with_retry\nCASES = {}\n\nclass Public(unittest.TestCase):\n    def test_nonretryable_propagates_immediately(self):\n        calls, sleeps = [], []\n        error = ValueError(\"do not retry\")\n        def fn():\n            calls.append(1)\n            raise error\n        with self.assertRaises(ValueError) as captured:\n            call_with_retry(fn, max_attempts=3, base_delay=1, retry_on=(OSError,), sleep=sleeps.append)\n        self.assertIs(captured.exception, error)\n        self.assertEqual((len(calls), sleeps), (1, []))\n    def test_one_attempt_does_not_sleep(self):\n        sleeps = []\n        def fn():\n            raise OSError(\"final\")\n        with self.assertRaises(OSError):\n            call_with_retry(fn, max_attempts=1, base_delay=2, retry_on=(OSError,), sleep=sleeps.append)\n        self.assertEqual(sleeps, [])\n\n\nif __name__ == '__main__':\n    unittest.main()\n"
+  },
+  "hidden_tests": {
+    "test_hidden.py": "import unittest\nimport copy\nimport math\nimport asyncio\nfrom decimal import Decimal, ROUND_HALF_UP\nfrom src.retry import call_with_retry\nCASES = [{'attempts': 2, 'failures': 2, 'delay': 0.5, 'calls': 2, 'sleeps': [0.5], 'result': None, 'success': False}, {'attempts': 1, 'failures': 2, 'delay': 0.5, 'calls': 1, 'sleeps': [], 'result': 1, 'success': False}, {'attempts': 3, 'failures': 4, 'delay': 0.125, 'calls': 3, 'sleeps': [0.125, 0.25], 'result': False, 'success': False}, {'attempts': 5, 'failures': 4, 'delay': 0, 'calls': 5, 'sleeps': [0, 0, 0, 0], 'result': False, 'success': True}, {'attempts': 5, 'failures': 4, 'delay': 0.125, 'calls': 5, 'sleeps': [0.125, 0.25, 0.5, 1.0], 'result': False, 'success': True}, {'attempts': 3, 'failures': 0, 'delay': 0.125, 'calls': 1, 'sleeps': [], 'result': 0, 'success': True}, {'attempts': 3, 'failures': 2, 'delay': 2, 'calls': 3, 'sleeps': [2, 4], 'result': 0, 'success': True}, {'attempts': 6, 'failures': 5, 'delay': 0.125, 'calls': 6, 'sleeps': [0.125, 0.25, 0.5, 1.0, 2.0], 'result': None, 'success': True}, {'attempts': 1, 'failures': 1, 'delay': 0.5, 'calls': 1, 'sleeps': [], 'result': 8, 'success': False}, {'attempts': 5, 'failures': 4, 'delay': 0.125, 'calls': 5, 'sleeps': [0.125, 0.25, 0.5, 1.0], 'result': False, 'success': True}, {'attempts': 3, 'failures': 0, 'delay': 0, 'calls': 1, 'sleeps': [], 'result': None, 'success': True}, {'attempts': 3, 'failures': 2, 'delay': 0.125, 'calls': 3, 'sleeps': [0.125, 0.25], 'result': 11, 'success': True}, {'attempts': 2, 'failures': 0, 'delay': 0.125, 'calls': 1, 'sleeps': [], 'result': None, 'success': True}, {'attempts': 6, 'failures': 7, 'delay': 0.125, 'calls': 6, 'sleeps': [0.125, 0.25, 0.5, 1.0, 2.0], 'result': 13, 'success': False}, {'attempts': 4, 'failures': 0, 'delay': 0.125, 'calls': 1, 'sleeps': [], 'result': 'ok', 'success': True}, {'attempts': 3, 'failures': 0, 'delay': 0, 'calls': 1, 'sleeps': [], 'result': 15, 'success': True}, {'attempts': 4, 'failures': 0, 'delay': 0.125, 'calls': 1, 'sleeps': [], 'result': 0, 'success': True}, {'attempts': 5, 'failures': 3, 'delay': 0.125, 'calls': 4, 'sleeps': [0.125, 0.25, 0.5], 'result': 17, 'success': True}, {'attempts': 3, 'failures': 0, 'delay': 0.5, 'calls': 1, 'sleeps': [], 'result': 0, 'success': True}, {'attempts': 5, 'failures': 6, 'delay': 0.125, 'calls': 5, 'sleeps': [0.125, 0.25, 0.5, 1.0], 'result': None, 'success': False}, {'attempts': 1, 'failures': 0, 'delay': 0.5, 'calls': 1, 'sleeps': [], 'result': 'ok', 'success': True}, {'attempts': 6, 'failures': 5, 'delay': 0, 'calls': 6, 'sleeps': [0, 0, 0, 0, 0], 'result': 'ok', 'success': True}, {'attempts': 2, 'failures': 1, 'delay': 0, 'calls': 2, 'sleeps': [0], 'result': 'ok', 'success': True}, {'attempts': 6, 'failures': 6, 'delay': 0, 'calls': 6, 'sleeps': [0, 0, 0, 0, 0], 'result': 23, 'success': False}, {'attempts': 1, 'failures': 0, 'delay': 0, 'calls': 1, 'sleeps': [], 'result': 0, 'success': True}, {'attempts': 2, 'failures': 1, 'delay': 0, 'calls': 2, 'sleeps': [0], 'result': 0, 'success': True}, {'attempts': 1, 'failures': 1, 'delay': 0.5, 'calls': 1, 'sleeps': [], 'result': 'ok', 'success': False}, {'attempts': 6, 'failures': 1, 'delay': 2, 'calls': 2, 'sleeps': [2], 'result': 'ok', 'success': True}, {'attempts': 2, 'failures': 1, 'delay': 0, 'calls': 2, 'sleeps': [0], 'result': 28, 'success': True}, {'attempts': 5, 'failures': 3, 'delay': 0.5, 'calls': 4, 'sleeps': [0.5, 1.0, 2.0], 'result': 0, 'success': True}, {'attempts': 1, 'failures': 2, 'delay': 0, 'calls': 1, 'sleeps': [], 'result': 30, 'success': False}, {'attempts': 5, 'failures': 5, 'delay': 0.5, 'calls': 5, 'sleeps': [0.5, 1.0, 2.0, 4.0], 'result': 'ok', 'success': False}, {'attempts': 4, 'failures': 2, 'delay': 0.125, 'calls': 3, 'sleeps': [0.125, 0.25], 'result': 0, 'success': True}, {'attempts': 2, 'failures': 1, 'delay': 0.5, 'calls': 2, 'sleeps': [0.5], 'result': False, 'success': True}, {'attempts': 3, 'failures': 0, 'delay': 0.125, 'calls': 1, 'sleeps': [], 'result': None, 'success': True}]\n\nclass Hidden(unittest.TestCase):\n    def test_first_success_and_falsy_results(self):\n        for result in (None, False, 0, \"\"):\n            calls, sleeps = [], []\n            def fn():\n                calls.append(1)\n                return result\n            self.assertIs(call_with_retry(fn, max_attempts=4, base_delay=1, retry_on=(OSError,), sleep=sleeps.append), result)\n            self.assertEqual((len(calls), sleeps), (1, []))\n    def test_later_success_exact_delays(self):\n        calls, sleeps = [], []\n        def fn():\n            calls.append(1)\n            if len(calls) < 4:\n                raise OSError(\"transient\")\n            return \"recovered\"\n        self.assertEqual(call_with_retry(fn, max_attempts=5, base_delay=0.5, retry_on=(OSError,), sleep=sleeps.append), \"recovered\")\n        self.assertEqual((len(calls), sleeps), (4, [0.5, 1.0, 2.0]))\n    def test_final_exception_identity_no_final_sleep(self):\n        error = OSError(\"same object\")\n        calls, sleeps = [], []\n        def fn():\n            calls.append(1)\n            raise error\n        with self.assertRaises(OSError) as captured:\n            call_with_retry(fn, max_attempts=3, base_delay=2, retry_on=(OSError,), sleep=sleeps.append)\n        self.assertIs(captured.exception, error)\n        self.assertEqual((len(calls), sleeps), (3, [2, 4]))\n    def test_empty_policy_and_keyboard_interrupt(self):\n        for error, policy in ((RuntimeError(\"ordinary\"), ()), (KeyboardInterrupt(), (Exception,)), (KeyboardInterrupt(), (BaseException,))):\n            calls, sleeps = [], []\n            def fn():\n                calls.append(1)\n                raise error\n            with self.assertRaises(type(error)) as captured:\n                call_with_retry(fn, max_attempts=5, base_delay=1, retry_on=policy, sleep=sleeps.append)\n            self.assertIs(captured.exception, error)\n            self.assertEqual((len(calls), sleeps), (1, []))\n    def test_zero_delay(self):\n        calls, sleeps = [], []\n        def fn():\n            calls.append(1)\n            if len(calls) < 3:\n                raise OSError()\n            return False\n        self.assertIs(call_with_retry(fn, max_attempts=3, base_delay=0, retry_on=(OSError,), sleep=sleeps.append), False)\n        self.assertEqual(sleeps, [0, 0])\n    def test_invalid_bounds_before_call(self):\n        for attempts in (0, -1, 2.5, True, \"2\"):\n            with self.assertRaises(ValueError):\n                call_with_retry(lambda: self.fail(\"called\"), max_attempts=attempts, base_delay=1, retry_on=(OSError,), sleep=lambda _: None)\n        for delay in (-1, float('inf'), float('nan'), True, \"1\"):\n            with self.assertRaises(ValueError):\n                call_with_retry(lambda: self.fail(\"called\"), max_attempts=2, base_delay=delay, retry_on=(OSError,), sleep=lambda _: None)\n    def test_sleeper_failure_propagates(self):\n        calls, sleeps = [], []\n        error = RuntimeError(\"sleep failure\")\n        def fn():\n            calls.append(1)\n            raise OSError()\n        def sleeper(delay):\n            sleeps.append(delay)\n            raise error\n        with self.assertRaises(RuntimeError) as captured:\n            call_with_retry(fn, max_attempts=4, base_delay=0.5, retry_on=(OSError,), sleep=sleeper)\n        self.assertIs(captured.exception, error)\n        self.assertEqual((len(calls), sleeps), (1, [0.5]))\n    def test_seeded_schedules(self):\n        for index, case in enumerate(CASES):\n            calls, sleeps = [], []\n            error = OSError(\"seeded failure\")\n            def fn():\n                calls.append(1)\n                if len(calls) <= case[\"failures\"]:\n                    raise error\n                return case[\"result\"]\n            with self.subTest(index=index):\n                if case[\"success\"]:\n                    result = call_with_retry(fn, max_attempts=case[\"attempts\"], base_delay=case[\"delay\"], retry_on=(OSError,), sleep=sleeps.append)\n                    self.assertEqual(result, case[\"result\"])\n                else:\n                    with self.assertRaises(OSError) as captured:\n                        call_with_retry(fn, max_attempts=case[\"attempts\"], base_delay=case[\"delay\"], retry_on=(OSError,), sleep=sleeps.append)\n                    self.assertIs(captured.exception, error)\n                self.assertEqual(len(calls), case[\"calls\"])\n                self.assertEqual(sleeps, case[\"sleeps\"])\n\n\nif __name__ == '__main__':\n    unittest.main()\n"
+  },
+  "public_count": 2,
+  "hidden_count": 8,
+  "contract": "Repair src/retry.py: call_with_retry(fn, *, max_attempts, base_delay, retry_on, sleep). max_attempts integer >=1, base_delay finite >=0 or ValueError. Call immediately and return any success including None/False. Retry only retry_on exceptions; preserve final exception identity. Before another attempt sleep base_delay*2**failure_index, first index 0. Never sleep after final attempt. Propagate BaseException and sleeper exceptions immediately.",
+  "cases": [
+    {
+      "attempts": 2,
+      "failures": 2,
+      "delay": 0.5,
+      "calls": 2,
+      "sleeps": [
+        0.5
+      ],
+      "result": null,
+      "success": false
+    },
+    {
+      "attempts": 1,
+      "failures": 2,
+      "delay": 0.5,
+      "calls": 1,
+      "sleeps": [],
+      "result": 1,
+      "success": false
+    },
+    {
+      "attempts": 3,
+      "failures": 4,
+      "delay": 0.125,
+      "calls": 3,
+      "sleeps": [
+        0.125,
+        0.25
+      ],
+      "result": false,
+      "success": false
+    },
+    {
+      "attempts": 5,
+      "failures": 4,
+      "delay": 0,
+      "calls": 5,
+      "sleeps": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "result": false,
+      "success": true
+    },
+    {
+      "attempts": 5,
+      "failures": 4,
+      "delay": 0.125,
+      "calls": 5,
+      "sleeps": [
+        0.125,
+        0.25,
+        0.5,
+        1.0
+      ],
+      "result": false,
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 0,
+      "delay": 0.125,
+      "calls": 1,
+      "sleeps": [],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 2,
+      "delay": 2,
+      "calls": 3,
+      "sleeps": [
+        2,
+        4
+      ],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 6,
+      "failures": 5,
+      "delay": 0.125,
+      "calls": 6,
+      "sleeps": [
+        0.125,
+        0.25,
+        0.5,
+        1.0,
+        2.0
+      ],
+      "result": null,
+      "success": true
+    },
+    {
+      "attempts": 1,
+      "failures": 1,
+      "delay": 0.5,
+      "calls": 1,
+      "sleeps": [],
+      "result": 8,
+      "success": false
+    },
+    {
+      "attempts": 5,
+      "failures": 4,
+      "delay": 0.125,
+      "calls": 5,
+      "sleeps": [
+        0.125,
+        0.25,
+        0.5,
+        1.0
+      ],
+      "result": false,
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 0,
+      "delay": 0,
+      "calls": 1,
+      "sleeps": [],
+      "result": null,
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 2,
+      "delay": 0.125,
+      "calls": 3,
+      "sleeps": [
+        0.125,
+        0.25
+      ],
+      "result": 11,
+      "success": true
+    },
+    {
+      "attempts": 2,
+      "failures": 0,
+      "delay": 0.125,
+      "calls": 1,
+      "sleeps": [],
+      "result": null,
+      "success": true
+    },
+    {
+      "attempts": 6,
+      "failures": 7,
+      "delay": 0.125,
+      "calls": 6,
+      "sleeps": [
+        0.125,
+        0.25,
+        0.5,
+        1.0,
+        2.0
+      ],
+      "result": 13,
+      "success": false
+    },
+    {
+      "attempts": 4,
+      "failures": 0,
+      "delay": 0.125,
+      "calls": 1,
+      "sleeps": [],
+      "result": "ok",
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 0,
+      "delay": 0,
+      "calls": 1,
+      "sleeps": [],
+      "result": 15,
+      "success": true
+    },
+    {
+      "attempts": 4,
+      "failures": 0,
+      "delay": 0.125,
+      "calls": 1,
+      "sleeps": [],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 5,
+      "failures": 3,
+      "delay": 0.125,
+      "calls": 4,
+      "sleeps": [
+        0.125,
+        0.25,
+        0.5
+      ],
+      "result": 17,
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 0,
+      "delay": 0.5,
+      "calls": 1,
+      "sleeps": [],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 5,
+      "failures": 6,
+      "delay": 0.125,
+      "calls": 5,
+      "sleeps": [
+        0.125,
+        0.25,
+        0.5,
+        1.0
+      ],
+      "result": null,
+      "success": false
+    },
+    {
+      "attempts": 1,
+      "failures": 0,
+      "delay": 0.5,
+      "calls": 1,
+      "sleeps": [],
+      "result": "ok",
+      "success": true
+    },
+    {
+      "attempts": 6,
+      "failures": 5,
+      "delay": 0,
+      "calls": 6,
+      "sleeps": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "result": "ok",
+      "success": true
+    },
+    {
+      "attempts": 2,
+      "failures": 1,
+      "delay": 0,
+      "calls": 2,
+      "sleeps": [
+        0
+      ],
+      "result": "ok",
+      "success": true
+    },
+    {
+      "attempts": 6,
+      "failures": 6,
+      "delay": 0,
+      "calls": 6,
+      "sleeps": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "result": 23,
+      "success": false
+    },
+    {
+      "attempts": 1,
+      "failures": 0,
+      "delay": 0,
+      "calls": 1,
+      "sleeps": [],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 2,
+      "failures": 1,
+      "delay": 0,
+      "calls": 2,
+      "sleeps": [
+        0
+      ],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 1,
+      "failures": 1,
+      "delay": 0.5,
+      "calls": 1,
+      "sleeps": [],
+      "result": "ok",
+      "success": false
+    },
+    {
+      "attempts": 6,
+      "failures": 1,
+      "delay": 2,
+      "calls": 2,
+      "sleeps": [
+        2
+      ],
+      "result": "ok",
+      "success": true
+    },
+    {
+      "attempts": 2,
+      "failures": 1,
+      "delay": 0,
+      "calls": 2,
+      "sleeps": [
+        0
+      ],
+      "result": 28,
+      "success": true
+    },
+    {
+      "attempts": 5,
+      "failures": 3,
+      "delay": 0.5,
+      "calls": 4,
+      "sleeps": [
+        0.5,
+        1.0,
+        2.0
+      ],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 1,
+      "failures": 2,
+      "delay": 0,
+      "calls": 1,
+      "sleeps": [],
+      "result": 30,
+      "success": false
+    },
+    {
+      "attempts": 5,
+      "failures": 5,
+      "delay": 0.5,
+      "calls": 5,
+      "sleeps": [
+        0.5,
+        1.0,
+        2.0,
+        4.0
+      ],
+      "result": "ok",
+      "success": false
+    },
+    {
+      "attempts": 4,
+      "failures": 2,
+      "delay": 0.125,
+      "calls": 3,
+      "sleeps": [
+        0.125,
+        0.25
+      ],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 2,
+      "failures": 1,
+      "delay": 0.5,
+      "calls": 2,
+      "sleeps": [
+        0.5
+      ],
+      "result": false,
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 0,
+      "delay": 0.125,
+      "calls": 1,
+      "sleeps": [],
+      "result": null,
+      "success": true
+    }
+  ],
+  "writable": [
+    "src/retry.py"
+  ],
+  "readonly": [],
+  "oracle": {
+    "cases": [
+      {
+        "attempts": 2,
+        "failures": 2,
+        "delay": 0.5,
+        "calls": 2,
+        "sleeps": [
+          0.5
+        ],
+        "result": null,
+        "success": false
+      },
+      {
+        "attempts": 1,
+        "failures": 2,
+        "delay": 0.5,
+        "calls": 1,
+        "sleeps": [],
+        "result": 1,
+        "success": false
+      },
+      {
+        "attempts": 3,
+        "failures": 4,
+        "delay": 0.125,
+        "calls": 3,
+        "sleeps": [
+          0.125,
+          0.25
+        ],
+        "result": false,
+        "success": false
+      },
+      {
+        "attempts": 5,
+        "failures": 4,
+        "delay": 0,
+        "calls": 5,
+        "sleeps": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "result": false,
+        "success": true
+      },
+      {
+        "attempts": 5,
+        "failures": 4,
+        "delay": 0.125,
+        "calls": 5,
+        "sleeps": [
+          0.125,
+          0.25,
+          0.5,
+          1.0
+        ],
+        "result": false,
+        "success": true
+      },
+      {
+        "attempts": 3,
+        "failures": 0,
+        "delay": 0.125,
+        "calls": 1,
+        "sleeps": [],
+        "result": 0,
+        "success": true
+      },
+      {
+        "attempts": 3,
+        "failures": 2,
+        "delay": 2,
+        "calls": 3,
+        "sleeps": [
+          2,
+          4
+        ],
+        "result": 0,
+        "success": true
+      },
+      {
+        "attempts": 6,
+        "failures": 5,
+        "delay": 0.125,
+        "calls": 6,
+        "sleeps": [
+          0.125,
+          0.25,
+          0.5,
+          1.0,
+          2.0
+        ],
+        "result": null,
+        "success": true
+      },
+      {
+        "attempts": 1,
+        "failures": 1,
+        "delay": 0.5,
+        "calls": 1,
+        "sleeps": [],
+        "result": 8,
+        "success": false
+      },
+      {
+        "attempts": 5,
+        "failures": 4,
+        "delay": 0.125,
+        "calls": 5,
+        "sleeps": [
+          0.125,
+          0.25,
+          0.5,
+          1.0
+        ],
+        "result": false,
+        "success": true
+      },
+      {
+        "attempts": 3,
+        "failures": 0,
+        "delay": 0,
+        "calls": 1,
+        "sleeps": [],
+        "result": null,
+        "success": true
+      },
+      {
+        "attempts": 3,
+        "failures": 2,
+        "delay": 0.125,
+        "calls": 3,
+        "sleeps": [
+          0.125,
+          0.25
+        ],
+        "result": 11,
+        "success": true
+      },
+      {
+        "attempts": 2,
+        "failures": 0,
+        "delay": 0.125,
+        "calls": 1,
+        "sleeps": [],
+        "result": null,
+        "success": true
+      },
+      {
+        "attempts": 6,
+        "failures": 7,
+        "delay": 0.125,
+        "calls": 6,
+        "sleeps": [
+          0.125,
+          0.25,
+          0.5,
+          1.0,
+          2.0
+        ],
+        "result": 13,
+        "success": false
+      },
+      {
+        "attempts": 4,
+        "failures": 0,
+        "delay": 0.125,
+        "calls": 1,
+        "sleeps": [],
+        "result": "ok",
+        "success": true
+      },
+      {
+        "attempts": 3,
+        "failures": 0,
+        "delay": 0,
+        "calls": 1,
+        "sleeps": [],
+        "result": 15,
+        "success": true
+      },
+      {
+        "attempts": 4,
+        "failures": 0,
+        "delay": 0.125,
+        "calls": 1,
+        "sleeps": [],
+        "result": 0,
+        "success": true
+      },
+      {
+        "attempts": 5,
+        "failures": 3,
+        "delay": 0.125,
+        "calls": 4,
+        "sleeps": [
+          0.125,
+          0.25,
+          0.5
+        ],
+        "result": 17,
+        "success": true
+      },
+      {
+        "attempts": 3,
+        "failures": 0,
+        "delay": 0.5,
+        "calls": 1,
+        "sleeps": [],
+        "result": 0,
+        "success": true
+      },
+      {
+        "attempts": 5,
+        "failures": 6,
+        "delay": 0.125,
+        "calls": 5,
+        "sleeps": [
+          0.125,
+          0.25,
+          0.5,
+          1.0
+        ],
+        "result": null,
+        "success": false
+      },
+      {
+        "attempts": 1,
+        "failures": 0,
+        "delay": 0.5,
+        "calls": 1,
+        "sleeps": [],
+        "result": "ok",
+        "success": true
+      },
+      {
+        "attempts": 6,
+        "failures": 5,
+        "delay": 0,
+        "calls": 6,
+        "sleeps": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "result": "ok",
+        "success": true
+      },
+      {
+        "attempts": 2,
+        "failures": 1,
+        "delay": 0,
+        "calls": 2,
+        "sleeps": [
+          0
+        ],
+        "result": "ok",
+        "success": true
+      },
+      {
+        "attempts": 6,
+        "failures": 6,
+        "delay": 0,
+        "calls": 6,
+        "sleeps": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "result": 23,
+        "success": false
+      },
+      {
+        "attempts": 1,
+        "failures": 0,
+        "delay": 0,
+        "calls": 1,
+        "sleeps": [],
+        "result": 0,
+        "success": true
+      },
+      {
+        "attempts": 2,
+        "failures": 1,
+        "delay": 0,
+        "calls": 2,
+        "sleeps": [
+          0
+        ],
+        "result": 0,
+        "success": true
+      },
+      {
+        "attempts": 1,
+        "failures": 1,
+        "delay": 0.5,
+        "calls": 1,
+        "sleeps": [],
+        "result": "ok",
+        "success": false
+      },
+      {
+        "attempts": 6,
+        "failures": 1,
+        "delay": 2,
+        "calls": 2,
+        "sleeps": [
+          2
+        ],
+        "result": "ok",
+        "success": true
+      },
+      {
+        "attempts": 2,
+        "failures": 1,
+        "delay": 0,
+        "calls": 2,
+        "sleeps": [
+          0
+        ],
+        "result": 28,
+        "success": true
+      },
+      {
+        "attempts": 5,
+        "failures": 3,
+        "delay": 0.5,
+        "calls": 4,
+        "sleeps": [
+          0.5,
+          1.0,
+          2.0
+        ],
+        "result": 0,
+        "success": true
+      },
+      {
+        "attempts": 1,
+        "failures": 2,
+        "delay": 0,
+        "calls": 1,
+        "sleeps": [],
+        "result": 30,
+        "success": false
+      },
+      {
+        "attempts": 5,
+        "failures": 5,
+        "delay": 0.5,
+        "calls": 5,
+        "sleeps": [
+          0.5,
+          1.0,
+          2.0,
+          4.0
+        ],
+        "result": "ok",
+        "success": false
+      },
+      {
+        "attempts": 4,
+        "failures": 2,
+        "delay": 0.125,
+        "calls": 3,
+        "sleeps": [
+          0.125,
+          0.25
+        ],
+        "result": 0,
+        "success": true
+      },
+      {
+        "attempts": 2,
+        "failures": 1,
+        "delay": 0.5,
+        "calls": 2,
+        "sleeps": [
+          0.5
+        ],
+        "result": false,
+        "success": true
+      },
+      {
+        "attempts": 3,
+        "failures": 0,
+        "delay": 0.125,
+        "calls": 1,
+        "sleeps": [],
+        "result": null,
+        "success": true
+      }
+    ],
+    "public_count": 2,
+    "hidden_count": 8
+  },
+  "allowed_tools": [
+    "list_files",
+    "read_file",
+    "write_file",
+    "apply_patch",
+    "run_tests"
+  ]
+}

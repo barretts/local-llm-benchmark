@@ -1,0 +1,549 @@
+{
+  "language": "typescript",
+  "source": {
+    "src/edit.ts": "export interface Edit { start: number; end: number; text: string; }\nfunction splitSurrogate(text: string, position: number): boolean {\n  if (position <= 0 || position >= text.length) return false;\n  const a = text.charCodeAt(position - 1), b = text.charCodeAt(position);\n  return a >= 0xD800 && a <= 0xDBFF && b >= 0xDC00 && b <= 0xDFFF;\n}\nfunction validated(text: string, edits: readonly Readonly<Edit>[]): Readonly<Edit>[] {\n  const ordered = [...edits].sort((a,b) => a.start - b.start || a.end - b.end);\n  for (let i = 0; i < ordered.length; i++) {\n    const e = ordered[i];\n    if (!Number.isInteger(e.start) || !Number.isInteger(e.end) || e.start < 0 ||\n        e.end < e.start || e.end > text.length || typeof e.text !== \"string\" ||\n        splitSurrogate(text,e.start) || splitSurrogate(text,e.end)) throw new Error(\"edit bounds\");\n    if (i && (e.start === ordered[i-1].start || e.start < ordered[i-1].end)) throw new Error(\"edit overlap\");\n  }\n  return ordered;\n}\nexport function applyEdits(text: string, edits: readonly Readonly<Edit>[]): string {\n  const ordered = validated(text, edits);\n  let characters = Array.from(text);\n  for (const edit of ordered) characters.splice(edit.start, edit.end - edit.start, ...Array.from(edit.text));\n  return characters.join(\"\");\n}\n"
+  },
+  "gold": {
+    "src/edit.ts": "export interface Edit { start: number; end: number; text: string; }\nfunction splitSurrogate(text: string, position: number): boolean {\n  if (position <= 0 || position >= text.length) return false;\n  const a = text.charCodeAt(position - 1), b = text.charCodeAt(position);\n  return a >= 0xD800 && a <= 0xDBFF && b >= 0xDC00 && b <= 0xDFFF;\n}\nfunction validated(text: string, edits: readonly Readonly<Edit>[]): Readonly<Edit>[] {\n  const ordered = [...edits].sort((a,b) => a.start - b.start || a.end - b.end);\n  for (let i = 0; i < ordered.length; i++) {\n    const e = ordered[i];\n    if (!Number.isInteger(e.start) || !Number.isInteger(e.end) || e.start < 0 ||\n        e.end < e.start || e.end > text.length || typeof e.text !== \"string\" ||\n        splitSurrogate(text,e.start) || splitSurrogate(text,e.end)) throw new Error(\"edit bounds\");\n    if (i && (e.start === ordered[i-1].start || e.start < ordered[i-1].end)) throw new Error(\"edit overlap\");\n  }\n  return ordered;\n}\nexport function applyEdits(text: string, edits: readonly Readonly<Edit>[]): string {\n  const ordered = validated(text, edits);\n  let result = text;\n  for (let i = ordered.length - 1; i >= 0; i--) {\n    const edit = ordered[i];\n    result = result.slice(0, edit.start) + edit.text + result.slice(edit.end);\n  }\n  return result;\n}\n"
+  },
+  "public_tests": {
+    "test_public.cjs": "'use strict';\nconst test = require('node:test');\nconst assert = require('node:assert/strict');\nconst subject = require('/workspace/.build/edit.js');\nconst CASES = [{\"text\":\"head-97\\r\\n\\ud83d\\ude00abc-271828-0-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S927\"},{\"start\":9,\"end\":11,\"text\":\"E29\"}],\"expected\":\"S927-97\\r\\nE29abc-271828-0-\\ud834\\udd1etail\"},{\"text\":\"head-22\\r\\n\\ud83d\\ude00abc-271828-1-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S498\"},{\"start\":9,\"end\":11,\"text\":\"E15\"}],\"expected\":\"S498-22\\r\\nE15abc-271828-1-\\ud834\\udd1etail\"},{\"text\":\"head-96\\r\\n\\ud83d\\ude00abc-271828-2-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S228\"},{\"start\":9,\"end\":11,\"text\":\"E40\"}],\"expected\":\"S228-96\\r\\nE40abc-271828-2-\\ud834\\udd1etail\"},{\"text\":\"head-10\\r\\n\\ud83d\\ude00abc-271828-3-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S287\"},{\"start\":9,\"end\":11,\"text\":\"E11\"}],\"expected\":\"S287-10\\r\\nE11abc-271828-3-\\ud834\\udd1etail\"},{\"text\":\"head-79\\r\\n\\ud83d\\ude00abc-271828-4-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S319\"},{\"start\":9,\"end\":11,\"text\":\"E47\"}],\"expected\":\"S319-79\\r\\nE47abc-271828-4-\\ud834\\udd1etail\"},{\"text\":\"head-94\\r\\n\\ud83d\\ude00abc-271828-5-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S684\"},{\"start\":9,\"end\":11,\"text\":\"E58\"}],\"expected\":\"S684-94\\r\\nE58abc-271828-5-\\ud834\\udd1etail\"},{\"text\":\"head-32\\r\\n\\ud83d\\ude00abc-271828-6-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S723\"},{\"start\":9,\"end\":11,\"text\":\"E57\"}],\"expected\":\"S723-32\\r\\nE57abc-271828-6-\\ud834\\udd1etail\"},{\"text\":\"head-47\\r\\n\\ud83d\\ude00abc-271828-7-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S191\"},{\"start\":9,\"end\":11,\"text\":\"E73\"}],\"expected\":\"S191-47\\r\\nE73abc-271828-7-\\ud834\\udd1etail\"},{\"text\":\"head-82\\r\\n\\ud83d\\ude00abc-271828-8-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S232\"},{\"start\":9,\"end\":11,\"text\":\"E66\"}],\"expected\":\"S232-82\\r\\nE66abc-271828-8-\\ud834\\udd1etail\"},{\"text\":\"head-96\\r\\n\\ud83d\\ude00abc-271828-9-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S447\"},{\"start\":9,\"end\":11,\"text\":\"E52\"}],\"expected\":\"S447-96\\r\\nE52abc-271828-9-\\ud834\\udd1etail\"},{\"text\":\"head-48\\r\\n\\ud83d\\ude00abc-271828-10-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S306\"},{\"start\":9,\"end\":11,\"text\":\"E33\"}],\"expected\":\"S306-48\\r\\nE33abc-271828-10-\\ud834\\udd1etail\"},{\"text\":\"head-89\\r\\n\\ud83d\\ude00abc-271828-11-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S130\"},{\"start\":9,\"end\":11,\"text\":\"E59\"}],\"expected\":\"S130-89\\r\\nE59abc-271828-11-\\ud834\\udd1etail\"},{\"text\":\"head-94\\r\\n\\ud83d\\ude00abc-271828-12-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S672\"},{\"start\":9,\"end\":11,\"text\":\"E23\"}],\"expected\":\"S672-94\\r\\nE23abc-271828-12-\\ud834\\udd1etail\"},{\"text\":\"head-48\\r\\n\\ud83d\\ude00abc-271828-13-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S688\"},{\"start\":9,\"end\":11,\"text\":\"E84\"}],\"expected\":\"S688-48\\r\\nE84abc-271828-13-\\ud834\\udd1etail\"},{\"text\":\"head-21\\r\\n\\ud83d\\ude00abc-271828-14-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S351\"},{\"start\":9,\"end\":11,\"text\":\"E77\"}],\"expected\":\"S351-21\\r\\nE77abc-271828-14-\\ud834\\udd1etail\"},{\"text\":\"head-84\\r\\n\\ud83d\\ude00abc-271828-15-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S385\"},{\"start\":9,\"end\":11,\"text\":\"E54\"}],\"expected\":\"S385-84\\r\\nE54abc-271828-15-\\ud834\\udd1etail\"}];\nconst {applyEdits} = subject;\ntest('simultaneous length-changing edits use original offsets', () => {\n  assert.equal(applyEdits('abcdef', [{start:0,end:1,text:'AAAA'},{start:4,end:6,text:'!'}]), 'AAAAbcd!');\n});\ntest('offset after emoji counts UTF-16 code units', () => {\n  assert.equal(applyEdits('A😀BCD', [{start:3,end:4,text:'x'}]), 'A😀xCD');\n});\n"
+  },
+  "hidden_tests": {
+    "test_hidden.cjs": "'use strict';\nconst test = require('node:test');\nconst assert = require('node:assert/strict');\nconst subject = require('/workspace/.build/edit.js');\nconst CASES = [{\"text\":\"head-97\\r\\n\\ud83d\\ude00abc-271828-0-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S927\"},{\"start\":9,\"end\":11,\"text\":\"E29\"}],\"expected\":\"S927-97\\r\\nE29abc-271828-0-\\ud834\\udd1etail\"},{\"text\":\"head-22\\r\\n\\ud83d\\ude00abc-271828-1-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S498\"},{\"start\":9,\"end\":11,\"text\":\"E15\"}],\"expected\":\"S498-22\\r\\nE15abc-271828-1-\\ud834\\udd1etail\"},{\"text\":\"head-96\\r\\n\\ud83d\\ude00abc-271828-2-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S228\"},{\"start\":9,\"end\":11,\"text\":\"E40\"}],\"expected\":\"S228-96\\r\\nE40abc-271828-2-\\ud834\\udd1etail\"},{\"text\":\"head-10\\r\\n\\ud83d\\ude00abc-271828-3-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S287\"},{\"start\":9,\"end\":11,\"text\":\"E11\"}],\"expected\":\"S287-10\\r\\nE11abc-271828-3-\\ud834\\udd1etail\"},{\"text\":\"head-79\\r\\n\\ud83d\\ude00abc-271828-4-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S319\"},{\"start\":9,\"end\":11,\"text\":\"E47\"}],\"expected\":\"S319-79\\r\\nE47abc-271828-4-\\ud834\\udd1etail\"},{\"text\":\"head-94\\r\\n\\ud83d\\ude00abc-271828-5-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S684\"},{\"start\":9,\"end\":11,\"text\":\"E58\"}],\"expected\":\"S684-94\\r\\nE58abc-271828-5-\\ud834\\udd1etail\"},{\"text\":\"head-32\\r\\n\\ud83d\\ude00abc-271828-6-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S723\"},{\"start\":9,\"end\":11,\"text\":\"E57\"}],\"expected\":\"S723-32\\r\\nE57abc-271828-6-\\ud834\\udd1etail\"},{\"text\":\"head-47\\r\\n\\ud83d\\ude00abc-271828-7-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S191\"},{\"start\":9,\"end\":11,\"text\":\"E73\"}],\"expected\":\"S191-47\\r\\nE73abc-271828-7-\\ud834\\udd1etail\"},{\"text\":\"head-82\\r\\n\\ud83d\\ude00abc-271828-8-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S232\"},{\"start\":9,\"end\":11,\"text\":\"E66\"}],\"expected\":\"S232-82\\r\\nE66abc-271828-8-\\ud834\\udd1etail\"},{\"text\":\"head-96\\r\\n\\ud83d\\ude00abc-271828-9-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S447\"},{\"start\":9,\"end\":11,\"text\":\"E52\"}],\"expected\":\"S447-96\\r\\nE52abc-271828-9-\\ud834\\udd1etail\"},{\"text\":\"head-48\\r\\n\\ud83d\\ude00abc-271828-10-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S306\"},{\"start\":9,\"end\":11,\"text\":\"E33\"}],\"expected\":\"S306-48\\r\\nE33abc-271828-10-\\ud834\\udd1etail\"},{\"text\":\"head-89\\r\\n\\ud83d\\ude00abc-271828-11-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S130\"},{\"start\":9,\"end\":11,\"text\":\"E59\"}],\"expected\":\"S130-89\\r\\nE59abc-271828-11-\\ud834\\udd1etail\"},{\"text\":\"head-94\\r\\n\\ud83d\\ude00abc-271828-12-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S672\"},{\"start\":9,\"end\":11,\"text\":\"E23\"}],\"expected\":\"S672-94\\r\\nE23abc-271828-12-\\ud834\\udd1etail\"},{\"text\":\"head-48\\r\\n\\ud83d\\ude00abc-271828-13-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S688\"},{\"start\":9,\"end\":11,\"text\":\"E84\"}],\"expected\":\"S688-48\\r\\nE84abc-271828-13-\\ud834\\udd1etail\"},{\"text\":\"head-21\\r\\n\\ud83d\\ude00abc-271828-14-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S351\"},{\"start\":9,\"end\":11,\"text\":\"E77\"}],\"expected\":\"S351-21\\r\\nE77abc-271828-14-\\ud834\\udd1etail\"},{\"text\":\"head-84\\r\\n\\ud83d\\ude00abc-271828-15-\\ud834\\udd1etail\",\"edits\":[{\"start\":0,\"end\":4,\"text\":\"S385\"},{\"start\":9,\"end\":11,\"text\":\"E54\"}],\"expected\":\"S385-84\\r\\nE54abc-271828-15-\\ud834\\udd1etail\"}];\nconst {applyEdits} = subject;\ntest('seeded Unicode CRLF edits match original-offset oracle', () => {\n  for (const c of CASES) assert.equal(applyEdits(c.text,c.edits),c.expected);\n});\ntest('untouched CRLF and Unicode survive insertions and deletions exactly', () => {\n  assert.equal(applyEdits('α\\r\\n😀\\r\\nZ',[{start:0,end:1,text:''},{start:7,end:7,text:'Q'}]),'\\r\\n😀\\r\\nQZ');\n});\ntest('adjacent replacement and insertion at previous end are valid', () => {\n  assert.equal(applyEdits('abcdef',[{start:0,end:2,text:'X'},{start:2,end:2,text:'Y'},{start:4,end:6,text:'Z'}]),'XYcdZ');\n  assert.equal(applyEdits('abc',[{start:0,end:1,text:'A'},{start:1,end:2,text:'B'}]),'ABc');\n});\ntest('overlap and equal starts including duplicate insertions are rejected', () => {\n  for (const edits of [[{start:1,end:3,text:'x'},{start:2,end:4,text:'y'}],\n    [{start:1,end:1,text:'x'},{start:1,end:1,text:'y'}],\n    [{start:1,end:1,text:'x'},{start:1,end:3,text:'y'}]]) assert.throws(()=>applyEdits('abcd',edits),Error);\n});\ntest('boundaries may not split surrogate pairs', () => {\n  for (const e of [{start:2,end:2,text:'x'},{start:0,end:2,text:''},{start:2,end:4,text:'x'}])\n    assert.throws(()=>applyEdits('A😀B',[e]),Error);\n  assert.equal(applyEdits('A😀B',[{start:1,end:3,text:'X'}]),'AXB');\n});\ntest('empty edits and string-edge edits work', () => {\n  assert.equal(applyEdits('😀\\r\\n',[]),'😀\\r\\n'); assert.equal(applyEdits('',[]),'');\n  assert.equal(applyEdits('abc',[{start:0,end:0,text:'<'},{start:3,end:3,text:'>'}]),'<abc>');\n  assert.equal(applyEdits('abc',[{start:0,end:3,text:''}]),'');\n});\ntest('integer bounds are strictly validated', () => {\n  for (const [start,end] of [[-1,0],[0,4],[2,1],[0.5,1],[0,NaN],[Infinity,Infinity]])\n    assert.throws(()=>applyEdits('abc',[{start,end,text:''}]),Error);\n});\ntest('unsorted frozen edits and edit objects remain unchanged', () => {\n  const edits = [{start:4,end:6,text:'!'},{start:0,end:1,text:'AAAA'}].map(Object.freeze); Object.freeze(edits);\n  const before = structuredClone(edits); assert.equal(applyEdits('abcdef',edits),'AAAAbcd!'); assert.deepEqual(edits,before);\n});\n"
+  },
+  "public_count": 2,
+  "hidden_count": 8,
+  "contract": "Repair src/edit.ts, preserving Edit {start:number;end:number;text:string}\nand applyEdits(text,readonly edits):string. Offsets are UTF-16 code units\nin the ORIGINAL string. Bounds must be integers 0<=start<=end<=length and\ncannot split an astral surrogate pair. Sort a fresh copy; reject overlaps\nand equal starts, including duplicate inserts. Adjacent edits and an\ninsertion at another edit's end are valid. Apply simultaneously, preserve\nuntouched CRLF/Unicode exactly, and never mutate edit objects/array.\n",
+  "cases": [
+    {
+      "text": "head-97\r\n😀abc-271828-0-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S927"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E29"
+        }
+      ],
+      "expected": "S927-97\r\nE29abc-271828-0-𝄞tail"
+    },
+    {
+      "text": "head-22\r\n😀abc-271828-1-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S498"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E15"
+        }
+      ],
+      "expected": "S498-22\r\nE15abc-271828-1-𝄞tail"
+    },
+    {
+      "text": "head-96\r\n😀abc-271828-2-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S228"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E40"
+        }
+      ],
+      "expected": "S228-96\r\nE40abc-271828-2-𝄞tail"
+    },
+    {
+      "text": "head-10\r\n😀abc-271828-3-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S287"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E11"
+        }
+      ],
+      "expected": "S287-10\r\nE11abc-271828-3-𝄞tail"
+    },
+    {
+      "text": "head-79\r\n😀abc-271828-4-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S319"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E47"
+        }
+      ],
+      "expected": "S319-79\r\nE47abc-271828-4-𝄞tail"
+    },
+    {
+      "text": "head-94\r\n😀abc-271828-5-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S684"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E58"
+        }
+      ],
+      "expected": "S684-94\r\nE58abc-271828-5-𝄞tail"
+    },
+    {
+      "text": "head-32\r\n😀abc-271828-6-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S723"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E57"
+        }
+      ],
+      "expected": "S723-32\r\nE57abc-271828-6-𝄞tail"
+    },
+    {
+      "text": "head-47\r\n😀abc-271828-7-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S191"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E73"
+        }
+      ],
+      "expected": "S191-47\r\nE73abc-271828-7-𝄞tail"
+    },
+    {
+      "text": "head-82\r\n😀abc-271828-8-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S232"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E66"
+        }
+      ],
+      "expected": "S232-82\r\nE66abc-271828-8-𝄞tail"
+    },
+    {
+      "text": "head-96\r\n😀abc-271828-9-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S447"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E52"
+        }
+      ],
+      "expected": "S447-96\r\nE52abc-271828-9-𝄞tail"
+    },
+    {
+      "text": "head-48\r\n😀abc-271828-10-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S306"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E33"
+        }
+      ],
+      "expected": "S306-48\r\nE33abc-271828-10-𝄞tail"
+    },
+    {
+      "text": "head-89\r\n😀abc-271828-11-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S130"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E59"
+        }
+      ],
+      "expected": "S130-89\r\nE59abc-271828-11-𝄞tail"
+    },
+    {
+      "text": "head-94\r\n😀abc-271828-12-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S672"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E23"
+        }
+      ],
+      "expected": "S672-94\r\nE23abc-271828-12-𝄞tail"
+    },
+    {
+      "text": "head-48\r\n😀abc-271828-13-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S688"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E84"
+        }
+      ],
+      "expected": "S688-48\r\nE84abc-271828-13-𝄞tail"
+    },
+    {
+      "text": "head-21\r\n😀abc-271828-14-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S351"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E77"
+        }
+      ],
+      "expected": "S351-21\r\nE77abc-271828-14-𝄞tail"
+    },
+    {
+      "text": "head-84\r\n😀abc-271828-15-𝄞tail",
+      "edits": [
+        {
+          "start": 0,
+          "end": 4,
+          "text": "S385"
+        },
+        {
+          "start": 9,
+          "end": 11,
+          "text": "E54"
+        }
+      ],
+      "expected": "S385-84\r\nE54abc-271828-15-𝄞tail"
+    }
+  ],
+  "writable": [
+    "src/edit.ts"
+  ],
+  "readonly": [],
+  "oracle": {
+    "cases": [
+      {
+        "text": "head-97\r\n😀abc-271828-0-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S927"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E29"
+          }
+        ],
+        "expected": "S927-97\r\nE29abc-271828-0-𝄞tail"
+      },
+      {
+        "text": "head-22\r\n😀abc-271828-1-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S498"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E15"
+          }
+        ],
+        "expected": "S498-22\r\nE15abc-271828-1-𝄞tail"
+      },
+      {
+        "text": "head-96\r\n😀abc-271828-2-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S228"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E40"
+          }
+        ],
+        "expected": "S228-96\r\nE40abc-271828-2-𝄞tail"
+      },
+      {
+        "text": "head-10\r\n😀abc-271828-3-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S287"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E11"
+          }
+        ],
+        "expected": "S287-10\r\nE11abc-271828-3-𝄞tail"
+      },
+      {
+        "text": "head-79\r\n😀abc-271828-4-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S319"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E47"
+          }
+        ],
+        "expected": "S319-79\r\nE47abc-271828-4-𝄞tail"
+      },
+      {
+        "text": "head-94\r\n😀abc-271828-5-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S684"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E58"
+          }
+        ],
+        "expected": "S684-94\r\nE58abc-271828-5-𝄞tail"
+      },
+      {
+        "text": "head-32\r\n😀abc-271828-6-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S723"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E57"
+          }
+        ],
+        "expected": "S723-32\r\nE57abc-271828-6-𝄞tail"
+      },
+      {
+        "text": "head-47\r\n😀abc-271828-7-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S191"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E73"
+          }
+        ],
+        "expected": "S191-47\r\nE73abc-271828-7-𝄞tail"
+      },
+      {
+        "text": "head-82\r\n😀abc-271828-8-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S232"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E66"
+          }
+        ],
+        "expected": "S232-82\r\nE66abc-271828-8-𝄞tail"
+      },
+      {
+        "text": "head-96\r\n😀abc-271828-9-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S447"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E52"
+          }
+        ],
+        "expected": "S447-96\r\nE52abc-271828-9-𝄞tail"
+      },
+      {
+        "text": "head-48\r\n😀abc-271828-10-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S306"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E33"
+          }
+        ],
+        "expected": "S306-48\r\nE33abc-271828-10-𝄞tail"
+      },
+      {
+        "text": "head-89\r\n😀abc-271828-11-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S130"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E59"
+          }
+        ],
+        "expected": "S130-89\r\nE59abc-271828-11-𝄞tail"
+      },
+      {
+        "text": "head-94\r\n😀abc-271828-12-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S672"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E23"
+          }
+        ],
+        "expected": "S672-94\r\nE23abc-271828-12-𝄞tail"
+      },
+      {
+        "text": "head-48\r\n😀abc-271828-13-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S688"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E84"
+          }
+        ],
+        "expected": "S688-48\r\nE84abc-271828-13-𝄞tail"
+      },
+      {
+        "text": "head-21\r\n😀abc-271828-14-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S351"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E77"
+          }
+        ],
+        "expected": "S351-21\r\nE77abc-271828-14-𝄞tail"
+      },
+      {
+        "text": "head-84\r\n😀abc-271828-15-𝄞tail",
+        "edits": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "S385"
+          },
+          {
+            "start": 9,
+            "end": 11,
+            "text": "E54"
+          }
+        ],
+        "expected": "S385-84\r\nE54abc-271828-15-𝄞tail"
+      }
+    ],
+    "public_count": 2,
+    "hidden_count": 8
+  },
+  "allowed_tools": [
+    "list_files",
+    "read_file",
+    "write_file",
+    "apply_patch",
+    "run_tests"
+  ]
+}

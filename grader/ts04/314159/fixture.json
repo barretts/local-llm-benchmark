@@ -1,0 +1,1073 @@
+{
+  "language": "typescript",
+  "source": {
+    "src/graph.ts": "export function topologicalOrder(graph: Readonly<Record<string, readonly string[]>>): string[] {\n  const visited = new Set<string>(), active = new Set<string>(), result: string[] = [];\n  function visit(name: string): void {\n    if (active.has(name)) throw new Error(\"cycle\");\n    if (visited.has(name)) return;\n    active.add(name);\n    for (const dependency of graph[name] ?? []) {\n      if (Object.prototype.hasOwnProperty.call(graph,dependency)) visit(dependency);\n    }\n    active.delete(name); visited.add(name); result.push(name);\n  }\n  for (const name of Object.keys(graph)) visit(name);\n  return result.sort((a,b)=>a<b?-1:a>b?1:0);\n}\n"
+  },
+  "gold": {
+    "src/graph.ts": "export function topologicalOrder(graph: Readonly<Record<string, readonly string[]>>): string[] {\n  const nodes = new Set<string>(Object.keys(graph));\n  for (const name of Object.keys(graph)) for (const dependency of graph[name]) nodes.add(dependency);\n  const prerequisites = new Map<string, Set<string>>();\n  const dependents = new Map<string, Set<string>>();\n  for (const name of nodes) {\n    prerequisites.set(name,new Set(Object.prototype.hasOwnProperty.call(graph,name) ? graph[name] : []));\n    dependents.set(name,new Set());\n  }\n  for (const [name,dependencies] of prerequisites) for (const dependency of dependencies) dependents.get(dependency)!.add(name);\n  const ready = [...nodes].filter(name=>prerequisites.get(name)!.size===0);\n  const result: string[] = [];\n  while (ready.length) {\n    ready.sort((a,b)=>a<b?-1:a>b?1:0);\n    const name = ready.shift()!; result.push(name);\n    for (const dependent of dependents.get(name)!) {\n      const dependencies = prerequisites.get(dependent)!; dependencies.delete(name);\n      if (dependencies.size===0) ready.push(dependent);\n    }\n  }\n  if (result.length!==nodes.size) throw new Error(\"cycle\");\n  return result;\n}\n"
+  },
+  "public_tests": {
+    "test_public.cjs": "'use strict';\nconst test = require('node:test');\nconst assert = require('node:assert/strict');\nconst subject = require('/workspace/.build/graph.js');\nconst CASES = [{\"graph\":{\"module-314159-07\":[],\"module-314159-01\":[],\"module-314159-05\":[],\"module-314159-04\":[],\"module-314159-00\":[\"module-314159-01\"],\"module-314159-06\":[\"module-314159-05\"],\"module-314159-02\":[],\"module-314159-03\":[\"module-314159-06\",\"external-0\"]},\"expected\":[\"external-0\",\"module-314159-01\",\"module-314159-00\",\"module-314159-02\",\"module-314159-04\",\"module-314159-05\",\"module-314159-06\",\"module-314159-03\",\"module-314159-07\"]},{\"graph\":{\"module-314159-00\":[],\"module-314159-01\":[],\"module-314159-07\":[],\"module-314159-05\":[\"module-314159-01\",\"module-314159-00\"],\"module-314159-03\":[\"module-314159-07\"],\"module-314159-06\":[],\"module-314159-02\":[],\"module-314159-04\":[\"external-1\"]},\"expected\":[\"external-1\",\"module-314159-00\",\"module-314159-01\",\"module-314159-02\",\"module-314159-04\",\"module-314159-05\",\"module-314159-06\",\"module-314159-07\",\"module-314159-03\"]},{\"graph\":{\"module-314159-03\":[],\"module-314159-06\":[\"module-314159-03\"],\"module-314159-00\":[\"module-314159-06\",\"module-314159-03\"],\"module-314159-07\":[\"module-314159-06\"],\"module-314159-01\":[\"module-314159-03\",\"module-314159-00\"],\"module-314159-05\":[],\"module-314159-02\":[\"module-314159-03\",\"module-314159-01\",\"module-314159-06\"],\"module-314159-04\":[\"module-314159-01\",\"module-314159-07\",\"external-2\"]},\"expected\":[\"external-2\",\"module-314159-03\",\"module-314159-05\",\"module-314159-06\",\"module-314159-00\",\"module-314159-01\",\"module-314159-02\",\"module-314159-07\",\"module-314159-04\"]},{\"graph\":{\"module-314159-03\":[],\"module-314159-06\":[],\"module-314159-01\":[],\"module-314159-05\":[\"module-314159-06\",\"module-314159-01\"],\"module-314159-00\":[],\"module-314159-07\":[\"module-314159-06\",\"module-314159-00\",\"module-314159-03\"],\"module-314159-04\":[\"module-314159-07\",\"module-314159-05\",\"module-314159-03\"],\"module-314159-02\":[\"external-3\"]},\"expected\":[\"external-3\",\"module-314159-00\",\"module-314159-01\",\"module-314159-02\",\"module-314159-03\",\"module-314159-06\",\"module-314159-05\",\"module-314159-07\",\"module-314159-04\"]},{\"graph\":{\"module-314159-05\":[],\"module-314159-03\":[\"module-314159-05\"],\"module-314159-06\":[\"module-314159-05\"],\"module-314159-04\":[\"module-314159-03\",\"module-314159-05\",\"module-314159-06\"],\"module-314159-01\":[],\"module-314159-07\":[\"module-314159-06\",\"module-314159-01\",\"module-314159-05\"],\"module-314159-00\":[],\"module-314159-02\":[\"module-314159-04\",\"module-314159-00\",\"external-4\"]},\"expected\":[\"external-4\",\"module-314159-00\",\"module-314159-01\",\"module-314159-05\",\"module-314159-03\",\"module-314159-06\",\"module-314159-04\",\"module-314159-02\",\"module-314159-07\"]},{\"graph\":{\"module-314159-02\":[],\"module-314159-00\":[\"module-314159-02\"],\"module-314159-03\":[\"module-314159-02\"],\"module-314159-01\":[\"module-314159-02\"],\"module-314159-06\":[\"module-314159-03\",\"module-314159-02\",\"module-314159-00\"],\"module-314159-05\":[\"module-314159-00\",\"module-314159-01\",\"module-314159-06\"],\"module-314159-07\":[\"module-314159-06\",\"module-314159-02\",\"module-314159-01\"],\"module-314159-04\":[\"module-314159-07\",\"module-314159-02\",\"module-314159-00\",\"external-5\"]},\"expected\":[\"external-5\",\"module-314159-02\",\"module-314159-00\",\"module-314159-01\",\"module-314159-03\",\"module-314159-06\",\"module-314159-05\",\"module-314159-07\",\"module-314159-04\"]},{\"graph\":{\"module-314159-01\":[],\"module-314159-04\":[\"module-314159-01\"],\"module-314159-02\":[\"module-314159-01\"],\"module-314159-00\":[],\"module-314159-05\":[\"module-314159-01\",\"module-314159-02\"],\"module-314159-06\":[],\"module-314159-07\":[\"module-314159-06\",\"module-314159-04\"],\"module-314159-03\":[\"module-314159-06\",\"module-314159-05\",\"external-6\"]},\"expected\":[\"external-6\",\"module-314159-00\",\"module-314159-01\",\"module-314159-02\",\"module-314159-04\",\"module-314159-05\",\"module-314159-06\",\"module-314159-03\",\"module-314159-07\"]},{\"graph\":{\"module-314159-05\":[],\"module-314159-07\":[],\"module-314159-04\":[\"module-314159-05\"],\"module-314159-01\":[],\"module-314159-00\":[\"module-314159-04\",\"module-314159-05\"],\"module-314159-02\":[\"module-314159-07\"],\"module-314159-03\":[],\"module-314159-06\":[\"module-314159-01\",\"module-314159-04\",\"module-314159-03\",\"external-7\"]},\"expected\":[\"external-7\",\"module-314159-01\",\"module-314159-03\",\"module-314159-05\",\"module-314159-04\",\"module-314159-00\",\"module-314159-06\",\"module-314159-07\",\"module-314159-02\"]},{\"graph\":{\"module-314159-02\":[],\"module-314159-04\":[\"module-314159-02\"],\"module-314159-06\":[\"module-314159-02\",\"module-314159-04\"],\"module-314159-01\":[\"module-314159-02\"],\"module-314159-03\":[\"module-314159-06\",\"module-314159-04\"],\"module-314159-05\":[],\"module-314159-07\":[\"module-314159-03\",\"module-314159-02\",\"module-314159-01\"],\"module-314159-00\":[\"module-314159-07\",\"module-314159-01\",\"module-314159-03\",\"external-8\"]},\"expected\":[\"external-8\",\"module-314159-02\",\"module-314159-01\",\"module-314159-04\",\"module-314159-05\",\"module-314159-06\",\"module-314159-03\",\"module-314159-07\",\"module-314159-00\"]},{\"graph\":{\"module-314159-02\":[],\"module-314159-04\":[\"module-314159-02\"],\"module-314159-01\":[],\"module-314159-00\":[\"module-314159-04\"],\"module-314159-07\":[],\"module-314159-05\":[\"module-314159-07\",\"module-314159-02\"],\"module-314159-03\":[\"module-314159-02\"],\"module-314159-06\":[\"module-314159-03\",\"module-314159-00\",\"external-9\"]},\"expected\":[\"external-9\",\"module-314159-01\",\"module-314159-02\",\"module-314159-03\",\"module-314159-04\",\"module-314159-00\",\"module-314159-06\",\"module-314159-07\",\"module-314159-05\"]},{\"graph\":{\"module-314159-02\":[],\"module-314159-05\":[\"module-314159-02\"],\"module-314159-04\":[\"module-314159-05\"],\"module-314159-07\":[],\"module-314159-06\":[\"module-314159-05\",\"module-314159-07\"],\"module-314159-00\":[],\"module-314159-01\":[\"module-314159-07\"],\"module-314159-03\":[\"module-314159-02\",\"module-314159-07\",\"module-314159-05\",\"external-10\"]},\"expected\":[\"external-10\",\"module-314159-00\",\"module-314159-02\",\"module-314159-05\",\"module-314159-04\",\"module-314159-07\",\"module-314159-01\",\"module-314159-03\",\"module-314159-06\"]},{\"graph\":{\"module-314159-02\":[],\"module-314159-07\":[],\"module-314159-01\":[\"module-314159-07\",\"module-314159-02\"],\"module-314159-04\":[\"module-314159-07\",\"module-314159-01\"],\"module-314159-06\":[\"module-314159-02\"],\"module-314159-03\":[],\"module-314159-05\":[],\"module-314159-00\":[\"module-314159-05\",\"module-314159-06\",\"external-11\"]},\"expected\":[\"external-11\",\"module-314159-02\",\"module-314159-03\",\"module-314159-05\",\"module-314159-06\",\"module-314159-00\",\"module-314159-07\",\"module-314159-01\",\"module-314159-04\"]},{\"graph\":{\"module-314159-02\":[],\"module-314159-07\":[],\"module-314159-03\":[\"module-314159-02\",\"module-314159-07\"],\"module-314159-06\":[\"module-314159-07\",\"module-314159-03\"],\"module-314159-04\":[\"module-314159-02\"],\"module-314159-05\":[\"module-314159-03\",\"module-314159-04\"],\"module-314159-00\":[],\"module-314159-01\":[\"module-314159-02\",\"module-314159-04\",\"external-12\"]},\"expected\":[\"external-12\",\"module-314159-00\",\"module-314159-02\",\"module-314159-04\",\"module-314159-01\",\"module-314159-07\",\"module-314159-03\",\"module-314159-05\",\"module-314159-06\"]},{\"graph\":{\"module-314159-05\":[],\"module-314159-03\":[\"module-314159-05\"],\"module-314159-01\":[],\"module-314159-07\":[\"module-314159-05\",\"module-314159-03\"],\"module-314159-04\":[\"module-314159-03\"],\"module-314159-02\":[\"module-314159-05\"],\"module-314159-06\":[\"module-314159-03\"],\"module-314159-00\":[\"external-13\"]},\"expected\":[\"external-13\",\"module-314159-00\",\"module-314159-01\",\"module-314159-05\",\"module-314159-02\",\"module-314159-03\",\"module-314159-04\",\"module-314159-06\",\"module-314159-07\"]}];\nconst {topologicalOrder} = subject;\ntest('a lexical reverse chain orders prerequisites first', () => {\n  assert.deepEqual(topologicalOrder({a:['b'],b:['c'],c:[]}),['c','b','a']);\n});\ntest('an undeclared dependency is included', () => {\n  assert.deepEqual(topologicalOrder({app:['external']}),['external','app']);\n});\n"
+  },
+  "hidden_tests": {
+    "test_hidden.cjs": "'use strict';\nconst test = require('node:test');\nconst assert = require('node:assert/strict');\nconst subject = require('/workspace/.build/graph.js');\nconst CASES = [{\"graph\":{\"module-314159-07\":[],\"module-314159-01\":[],\"module-314159-05\":[],\"module-314159-04\":[],\"module-314159-00\":[\"module-314159-01\"],\"module-314159-06\":[\"module-314159-05\"],\"module-314159-02\":[],\"module-314159-03\":[\"module-314159-06\",\"external-0\"]},\"expected\":[\"external-0\",\"module-314159-01\",\"module-314159-00\",\"module-314159-02\",\"module-314159-04\",\"module-314159-05\",\"module-314159-06\",\"module-314159-03\",\"module-314159-07\"]},{\"graph\":{\"module-314159-00\":[],\"module-314159-01\":[],\"module-314159-07\":[],\"module-314159-05\":[\"module-314159-01\",\"module-314159-00\"],\"module-314159-03\":[\"module-314159-07\"],\"module-314159-06\":[],\"module-314159-02\":[],\"module-314159-04\":[\"external-1\"]},\"expected\":[\"external-1\",\"module-314159-00\",\"module-314159-01\",\"module-314159-02\",\"module-314159-04\",\"module-314159-05\",\"module-314159-06\",\"module-314159-07\",\"module-314159-03\"]},{\"graph\":{\"module-314159-03\":[],\"module-314159-06\":[\"module-314159-03\"],\"module-314159-00\":[\"module-314159-06\",\"module-314159-03\"],\"module-314159-07\":[\"module-314159-06\"],\"module-314159-01\":[\"module-314159-03\",\"module-314159-00\"],\"module-314159-05\":[],\"module-314159-02\":[\"module-314159-03\",\"module-314159-01\",\"module-314159-06\"],\"module-314159-04\":[\"module-314159-01\",\"module-314159-07\",\"external-2\"]},\"expected\":[\"external-2\",\"module-314159-03\",\"module-314159-05\",\"module-314159-06\",\"module-314159-00\",\"module-314159-01\",\"module-314159-02\",\"module-314159-07\",\"module-314159-04\"]},{\"graph\":{\"module-314159-03\":[],\"module-314159-06\":[],\"module-314159-01\":[],\"module-314159-05\":[\"module-314159-06\",\"module-314159-01\"],\"module-314159-00\":[],\"module-314159-07\":[\"module-314159-06\",\"module-314159-00\",\"module-314159-03\"],\"module-314159-04\":[\"module-314159-07\",\"module-314159-05\",\"module-314159-03\"],\"module-314159-02\":[\"external-3\"]},\"expected\":[\"external-3\",\"module-314159-00\",\"module-314159-01\",\"module-314159-02\",\"module-314159-03\",\"module-314159-06\",\"module-314159-05\",\"module-314159-07\",\"module-314159-04\"]},{\"graph\":{\"module-314159-05\":[],\"module-314159-03\":[\"module-314159-05\"],\"module-314159-06\":[\"module-314159-05\"],\"module-314159-04\":[\"module-314159-03\",\"module-314159-05\",\"module-314159-06\"],\"module-314159-01\":[],\"module-314159-07\":[\"module-314159-06\",\"module-314159-01\",\"module-314159-05\"],\"module-314159-00\":[],\"module-314159-02\":[\"module-314159-04\",\"module-314159-00\",\"external-4\"]},\"expected\":[\"external-4\",\"module-314159-00\",\"module-314159-01\",\"module-314159-05\",\"module-314159-03\",\"module-314159-06\",\"module-314159-04\",\"module-314159-02\",\"module-314159-07\"]},{\"graph\":{\"module-314159-02\":[],\"module-314159-00\":[\"module-314159-02\"],\"module-314159-03\":[\"module-314159-02\"],\"module-314159-01\":[\"module-314159-02\"],\"module-314159-06\":[\"module-314159-03\",\"module-314159-02\",\"module-314159-00\"],\"module-314159-05\":[\"module-314159-00\",\"module-314159-01\",\"module-314159-06\"],\"module-314159-07\":[\"module-314159-06\",\"module-314159-02\",\"module-314159-01\"],\"module-314159-04\":[\"module-314159-07\",\"module-314159-02\",\"module-314159-00\",\"external-5\"]},\"expected\":[\"external-5\",\"module-314159-02\",\"module-314159-00\",\"module-314159-01\",\"module-314159-03\",\"module-314159-06\",\"module-314159-05\",\"module-314159-07\",\"module-314159-04\"]},{\"graph\":{\"module-314159-01\":[],\"module-314159-04\":[\"module-314159-01\"],\"module-314159-02\":[\"module-314159-01\"],\"module-314159-00\":[],\"module-314159-05\":[\"module-314159-01\",\"module-314159-02\"],\"module-314159-06\":[],\"module-314159-07\":[\"module-314159-06\",\"module-314159-04\"],\"module-314159-03\":[\"module-314159-06\",\"module-314159-05\",\"external-6\"]},\"expected\":[\"external-6\",\"module-314159-00\",\"module-314159-01\",\"module-314159-02\",\"module-314159-04\",\"module-314159-05\",\"module-314159-06\",\"module-314159-03\",\"module-314159-07\"]},{\"graph\":{\"module-314159-05\":[],\"module-314159-07\":[],\"module-314159-04\":[\"module-314159-05\"],\"module-314159-01\":[],\"module-314159-00\":[\"module-314159-04\",\"module-314159-05\"],\"module-314159-02\":[\"module-314159-07\"],\"module-314159-03\":[],\"module-314159-06\":[\"module-314159-01\",\"module-314159-04\",\"module-314159-03\",\"external-7\"]},\"expected\":[\"external-7\",\"module-314159-01\",\"module-314159-03\",\"module-314159-05\",\"module-314159-04\",\"module-314159-00\",\"module-314159-06\",\"module-314159-07\",\"module-314159-02\"]},{\"graph\":{\"module-314159-02\":[],\"module-314159-04\":[\"module-314159-02\"],\"module-314159-06\":[\"module-314159-02\",\"module-314159-04\"],\"module-314159-01\":[\"module-314159-02\"],\"module-314159-03\":[\"module-314159-06\",\"module-314159-04\"],\"module-314159-05\":[],\"module-314159-07\":[\"module-314159-03\",\"module-314159-02\",\"module-314159-01\"],\"module-314159-00\":[\"module-314159-07\",\"module-314159-01\",\"module-314159-03\",\"external-8\"]},\"expected\":[\"external-8\",\"module-314159-02\",\"module-314159-01\",\"module-314159-04\",\"module-314159-05\",\"module-314159-06\",\"module-314159-03\",\"module-314159-07\",\"module-314159-00\"]},{\"graph\":{\"module-314159-02\":[],\"module-314159-04\":[\"module-314159-02\"],\"module-314159-01\":[],\"module-314159-00\":[\"module-314159-04\"],\"module-314159-07\":[],\"module-314159-05\":[\"module-314159-07\",\"module-314159-02\"],\"module-314159-03\":[\"module-314159-02\"],\"module-314159-06\":[\"module-314159-03\",\"module-314159-00\",\"external-9\"]},\"expected\":[\"external-9\",\"module-314159-01\",\"module-314159-02\",\"module-314159-03\",\"module-314159-04\",\"module-314159-00\",\"module-314159-06\",\"module-314159-07\",\"module-314159-05\"]},{\"graph\":{\"module-314159-02\":[],\"module-314159-05\":[\"module-314159-02\"],\"module-314159-04\":[\"module-314159-05\"],\"module-314159-07\":[],\"module-314159-06\":[\"module-314159-05\",\"module-314159-07\"],\"module-314159-00\":[],\"module-314159-01\":[\"module-314159-07\"],\"module-314159-03\":[\"module-314159-02\",\"module-314159-07\",\"module-314159-05\",\"external-10\"]},\"expected\":[\"external-10\",\"module-314159-00\",\"module-314159-02\",\"module-314159-05\",\"module-314159-04\",\"module-314159-07\",\"module-314159-01\",\"module-314159-03\",\"module-314159-06\"]},{\"graph\":{\"module-314159-02\":[],\"module-314159-07\":[],\"module-314159-01\":[\"module-314159-07\",\"module-314159-02\"],\"module-314159-04\":[\"module-314159-07\",\"module-314159-01\"],\"module-314159-06\":[\"module-314159-02\"],\"module-314159-03\":[],\"module-314159-05\":[],\"module-314159-00\":[\"module-314159-05\",\"module-314159-06\",\"external-11\"]},\"expected\":[\"external-11\",\"module-314159-02\",\"module-314159-03\",\"module-314159-05\",\"module-314159-06\",\"module-314159-00\",\"module-314159-07\",\"module-314159-01\",\"module-314159-04\"]},{\"graph\":{\"module-314159-02\":[],\"module-314159-07\":[],\"module-314159-03\":[\"module-314159-02\",\"module-314159-07\"],\"module-314159-06\":[\"module-314159-07\",\"module-314159-03\"],\"module-314159-04\":[\"module-314159-02\"],\"module-314159-05\":[\"module-314159-03\",\"module-314159-04\"],\"module-314159-00\":[],\"module-314159-01\":[\"module-314159-02\",\"module-314159-04\",\"external-12\"]},\"expected\":[\"external-12\",\"module-314159-00\",\"module-314159-02\",\"module-314159-04\",\"module-314159-01\",\"module-314159-07\",\"module-314159-03\",\"module-314159-05\",\"module-314159-06\"]},{\"graph\":{\"module-314159-05\":[],\"module-314159-03\":[\"module-314159-05\"],\"module-314159-01\":[],\"module-314159-07\":[\"module-314159-05\",\"module-314159-03\"],\"module-314159-04\":[\"module-314159-03\"],\"module-314159-02\":[\"module-314159-05\"],\"module-314159-06\":[\"module-314159-03\"],\"module-314159-00\":[\"external-13\"]},\"expected\":[\"external-13\",\"module-314159-00\",\"module-314159-01\",\"module-314159-05\",\"module-314159-02\",\"module-314159-03\",\"module-314159-04\",\"module-314159-06\",\"module-314159-07\"]}];\nconst {topologicalOrder} = subject;\ntest('seeded DAGs match stable Kahn oracle including missing nodes', () => {\n  for (const c of CASES) assert.deepEqual(topologicalOrder(c.graph),c.expected);\n});\ntest('lexical minimum is chosen anew when a module becomes ready', () => {\n  assert.deepEqual(topologicalOrder({a:['b'],b:[],c:[],d:['a','c']}),['b','a','c','d']);\n});\ntest('disconnected components and duplicated edges are handled', () => {\n  assert.deepEqual(topologicalOrder({b:['z','z'],z:[],a:[],c:['a']}),['a','c','z','b']);\n});\ntest('multi-node cycles throw', () => {\n  assert.throws(()=>topologicalOrder({a:['b'],b:['c'],c:['a']}),Error);\n  assert.throws(()=>topologicalOrder({ready:[],a:['b'],b:['a']}),Error);\n});\ntest('self cycles throw', () => { assert.throws(()=>topologicalOrder({x:['x']}),Error); });\ntest('prototype-like names and own properties are ordinary module names', () => {\n  const graph = JSON.parse('{\"__proto__\":[\"constructor\"],\"constructor\":[\"toString\"],\"toString\":[]}');\n  assert.deepEqual(topologicalOrder(graph),['toString','constructor','__proto__']);\n  const inherited = Object.create({bad:['bad']}); inherited.app=['dependency'];\n  assert.deepEqual(topologicalOrder(inherited),['dependency','app']);\n});\ntest('empty graph returns empty output', () => { assert.deepEqual(topologicalOrder({}),[]); });\ntest('frozen source object and prerequisite arrays remain unchanged', () => {\n  const graph = {a:Object.freeze(['z','z']),z:Object.freeze([])}; Object.freeze(graph);\n  const before = structuredClone(graph); assert.deepEqual(topologicalOrder(graph),['z','a']); assert.deepEqual(graph,before);\n});\n"
+  },
+  "public_count": 2,
+  "hidden_count": 8,
+  "contract": "Repair src/graph.ts and preserve topologicalOrder(graph:\nReadonly<Record<string,readonly string[]>>):string[]. A key lists its\nprerequisites. Include undeclared dependency names; deduplicate edges.\nAt every step choose the lexically smallest CURRENTLY ready name with\ndeterministic < / > comparison. Prerequisites precede dependents. Any\ncycle including self-cycle throws. Do not mutate input. Use own properties\nand safe maps so prototype-like names are ordinary names.\n",
+  "cases": [
+    {
+      "graph": {
+        "module-314159-07": [],
+        "module-314159-01": [],
+        "module-314159-05": [],
+        "module-314159-04": [],
+        "module-314159-00": [
+          "module-314159-01"
+        ],
+        "module-314159-06": [
+          "module-314159-05"
+        ],
+        "module-314159-02": [],
+        "module-314159-03": [
+          "module-314159-06",
+          "external-0"
+        ]
+      },
+      "expected": [
+        "external-0",
+        "module-314159-01",
+        "module-314159-00",
+        "module-314159-02",
+        "module-314159-04",
+        "module-314159-05",
+        "module-314159-06",
+        "module-314159-03",
+        "module-314159-07"
+      ]
+    },
+    {
+      "graph": {
+        "module-314159-00": [],
+        "module-314159-01": [],
+        "module-314159-07": [],
+        "module-314159-05": [
+          "module-314159-01",
+          "module-314159-00"
+        ],
+        "module-314159-03": [
+          "module-314159-07"
+        ],
+        "module-314159-06": [],
+        "module-314159-02": [],
+        "module-314159-04": [
+          "external-1"
+        ]
+      },
+      "expected": [
+        "external-1",
+        "module-314159-00",
+        "module-314159-01",
+        "module-314159-02",
+        "module-314159-04",
+        "module-314159-05",
+        "module-314159-06",
+        "module-314159-07",
+        "module-314159-03"
+      ]
+    },
+    {
+      "graph": {
+        "module-314159-03": [],
+        "module-314159-06": [
+          "module-314159-03"
+        ],
+        "module-314159-00": [
+          "module-314159-06",
+          "module-314159-03"
+        ],
+        "module-314159-07": [
+          "module-314159-06"
+        ],
+        "module-314159-01": [
+          "module-314159-03",
+          "module-314159-00"
+        ],
+        "module-314159-05": [],
+        "module-314159-02": [
+          "module-314159-03",
+          "module-314159-01",
+          "module-314159-06"
+        ],
+        "module-314159-04": [
+          "module-314159-01",
+          "module-314159-07",
+          "external-2"
+        ]
+      },
+      "expected": [
+        "external-2",
+        "module-314159-03",
+        "module-314159-05",
+        "module-314159-06",
+        "module-314159-00",
+        "module-314159-01",
+        "module-314159-02",
+        "module-314159-07",
+        "module-314159-04"
+      ]
+    },
+    {
+      "graph": {
+        "module-314159-03": [],
+        "module-314159-06": [],
+        "module-314159-01": [],
+        "module-314159-05": [
+          "module-314159-06",
+          "module-314159-01"
+        ],
+        "module-314159-00": [],
+        "module-314159-07": [
+          "module-314159-06",
+          "module-314159-00",
+          "module-314159-03"
+        ],
+        "module-314159-04": [
+          "module-314159-07",
+          "module-314159-05",
+          "module-314159-03"
+        ],
+        "module-314159-02": [
+          "external-3"
+        ]
+      },
+      "expected": [
+        "external-3",
+        "module-314159-00",
+        "module-314159-01",
+        "module-314159-02",
+        "module-314159-03",
+        "module-314159-06",
+        "module-314159-05",
+        "module-314159-07",
+        "module-314159-04"
+      ]
+    },
+    {
+      "graph": {
+        "module-314159-05": [],
+        "module-314159-03": [
+          "module-314159-05"
+        ],
+        "module-314159-06": [
+          "module-314159-05"
+        ],
+        "module-314159-04": [
+          "module-314159-03",
+          "module-314159-05",
+          "module-314159-06"
+        ],
+        "module-314159-01": [],
+        "module-314159-07": [
+          "module-314159-06",
+          "module-314159-01",
+          "module-314159-05"
+        ],
+        "module-314159-00": [],
+        "module-314159-02": [
+          "module-314159-04",
+          "module-314159-00",
+          "external-4"
+        ]
+      },
+      "expected": [
+        "external-4",
+        "module-314159-00",
+        "module-314159-01",
+        "module-314159-05",
+        "module-314159-03",
+        "module-314159-06",
+        "module-314159-04",
+        "module-314159-02",
+        "module-314159-07"
+      ]
+    },
+    {
+      "graph": {
+        "module-314159-02": [],
+        "module-314159-00": [
+          "module-314159-02"
+        ],
+        "module-314159-03": [
+          "module-314159-02"
+        ],
+        "module-314159-01": [
+          "module-314159-02"
+        ],
+        "module-314159-06": [
+          "module-314159-03",
+          "module-314159-02",
+          "module-314159-00"
+        ],
+        "module-314159-05": [
+          "module-314159-00",
+          "module-314159-01",
+          "module-314159-06"
+        ],
+        "module-314159-07": [
+          "module-314159-06",
+          "module-314159-02",
+          "module-314159-01"
+        ],
+        "module-314159-04": [
+          "module-314159-07",
+          "module-314159-02",
+          "module-314159-00",
+          "external-5"
+        ]
+      },
+      "expected": [
+        "external-5",
+        "module-314159-02",
+        "module-314159-00",
+        "module-314159-01",
+        "module-314159-03",
+        "module-314159-06",
+        "module-314159-05",
+        "module-314159-07",
+        "module-314159-04"
+      ]
+    },
+    {
+      "graph": {
+        "module-314159-01": [],
+        "module-314159-04": [
+          "module-314159-01"
+        ],
+        "module-314159-02": [
+          "module-314159-01"
+        ],
+        "module-314159-00": [],
+        "module-314159-05": [
+          "module-314159-01",
+          "module-314159-02"
+        ],
+        "module-314159-06": [],
+        "module-314159-07": [
+          "module-314159-06",
+          "module-314159-04"
+        ],
+        "module-314159-03": [
+          "module-314159-06",
+          "module-314159-05",
+          "external-6"
+        ]
+      },
+      "expected": [
+        "external-6",
+        "module-314159-00",
+        "module-314159-01",
+        "module-314159-02",
+        "module-314159-04",
+        "module-314159-05",
+        "module-314159-06",
+        "module-314159-03",
+        "module-314159-07"
+      ]
+    },
+    {
+      "graph": {
+        "module-314159-05": [],
+        "module-314159-07": [],
+        "module-314159-04": [
+          "module-314159-05"
+        ],
+        "module-314159-01": [],
+        "module-314159-00": [
+          "module-314159-04",
+          "module-314159-05"
+        ],
+        "module-314159-02": [
+          "module-314159-07"
+        ],
+        "module-314159-03": [],
+        "module-314159-06": [
+          "module-314159-01",
+          "module-314159-04",
+          "module-314159-03",
+          "external-7"
+        ]
+      },
+      "expected": [
+        "external-7",
+        "module-314159-01",
+        "module-314159-03",
+        "module-314159-05",
+        "module-314159-04",
+        "module-314159-00",
+        "module-314159-06",
+        "module-314159-07",
+        "module-314159-02"
+      ]
+    },
+    {
+      "graph": {
+        "module-314159-02": [],
+        "module-314159-04": [
+          "module-314159-02"
+        ],
+        "module-314159-06": [
+          "module-314159-02",
+          "module-314159-04"
+        ],
+        "module-314159-01": [
+          "module-314159-02"
+        ],
+        "module-314159-03": [
+          "module-314159-06",
+          "module-314159-04"
+        ],
+        "module-314159-05": [],
+        "module-314159-07": [
+          "module-314159-03",
+          "module-314159-02",
+          "module-314159-01"
+        ],
+        "module-314159-00": [
+          "module-314159-07",
+          "module-314159-01",
+          "module-314159-03",
+          "external-8"
+        ]
+      },
+      "expected": [
+        "external-8",
+        "module-314159-02",
+        "module-314159-01",
+        "module-314159-04",
+        "module-314159-05",
+        "module-314159-06",
+        "module-314159-03",
+        "module-314159-07",
+        "module-314159-00"
+      ]
+    },
+    {
+      "graph": {
+        "module-314159-02": [],
+        "module-314159-04": [
+          "module-314159-02"
+        ],
+        "module-314159-01": [],
+        "module-314159-00": [
+          "module-314159-04"
+        ],
+        "module-314159-07": [],
+        "module-314159-05": [
+          "module-314159-07",
+          "module-314159-02"
+        ],
+        "module-314159-03": [
+          "module-314159-02"
+        ],
+        "module-314159-06": [
+          "module-314159-03",
+          "module-314159-00",
+          "external-9"
+        ]
+      },
+      "expected": [
+        "external-9",
+        "module-314159-01",
+        "module-314159-02",
+        "module-314159-03",
+        "module-314159-04",
+        "module-314159-00",
+        "module-314159-06",
+        "module-314159-07",
+        "module-314159-05"
+      ]
+    },
+    {
+      "graph": {
+        "module-314159-02": [],
+        "module-314159-05": [
+          "module-314159-02"
+        ],
+        "module-314159-04": [
+          "module-314159-05"
+        ],
+        "module-314159-07": [],
+        "module-314159-06": [
+          "module-314159-05",
+          "module-314159-07"
+        ],
+        "module-314159-00": [],
+        "module-314159-01": [
+          "module-314159-07"
+        ],
+        "module-314159-03": [
+          "module-314159-02",
+          "module-314159-07",
+          "module-314159-05",
+          "external-10"
+        ]
+      },
+      "expected": [
+        "external-10",
+        "module-314159-00",
+        "module-314159-02",
+        "module-314159-05",
+        "module-314159-04",
+        "module-314159-07",
+        "module-314159-01",
+        "module-314159-03",
+        "module-314159-06"
+      ]
+    },
+    {
+      "graph": {
+        "module-314159-02": [],
+        "module-314159-07": [],
+        "module-314159-01": [
+          "module-314159-07",
+          "module-314159-02"
+        ],
+        "module-314159-04": [
+          "module-314159-07",
+          "module-314159-01"
+        ],
+        "module-314159-06": [
+          "module-314159-02"
+        ],
+        "module-314159-03": [],
+        "module-314159-05": [],
+        "module-314159-00": [
+          "module-314159-05",
+          "module-314159-06",
+          "external-11"
+        ]
+      },
+      "expected": [
+        "external-11",
+        "module-314159-02",
+        "module-314159-03",
+        "module-314159-05",
+        "module-314159-06",
+        "module-314159-00",
+        "module-314159-07",
+        "module-314159-01",
+        "module-314159-04"
+      ]
+    },
+    {
+      "graph": {
+        "module-314159-02": [],
+        "module-314159-07": [],
+        "module-314159-03": [
+          "module-314159-02",
+          "module-314159-07"
+        ],
+        "module-314159-06": [
+          "module-314159-07",
+          "module-314159-03"
+        ],
+        "module-314159-04": [
+          "module-314159-02"
+        ],
+        "module-314159-05": [
+          "module-314159-03",
+          "module-314159-04"
+        ],
+        "module-314159-00": [],
+        "module-314159-01": [
+          "module-314159-02",
+          "module-314159-04",
+          "external-12"
+        ]
+      },
+      "expected": [
+        "external-12",
+        "module-314159-00",
+        "module-314159-02",
+        "module-314159-04",
+        "module-314159-01",
+        "module-314159-07",
+        "module-314159-03",
+        "module-314159-05",
+        "module-314159-06"
+      ]
+    },
+    {
+      "graph": {
+        "module-314159-05": [],
+        "module-314159-03": [
+          "module-314159-05"
+        ],
+        "module-314159-01": [],
+        "module-314159-07": [
+          "module-314159-05",
+          "module-314159-03"
+        ],
+        "module-314159-04": [
+          "module-314159-03"
+        ],
+        "module-314159-02": [
+          "module-314159-05"
+        ],
+        "module-314159-06": [
+          "module-314159-03"
+        ],
+        "module-314159-00": [
+          "external-13"
+        ]
+      },
+      "expected": [
+        "external-13",
+        "module-314159-00",
+        "module-314159-01",
+        "module-314159-05",
+        "module-314159-02",
+        "module-314159-03",
+        "module-314159-04",
+        "module-314159-06",
+        "module-314159-07"
+      ]
+    }
+  ],
+  "writable": [
+    "src/graph.ts"
+  ],
+  "readonly": [],
+  "oracle": {
+    "cases": [
+      {
+        "graph": {
+          "module-314159-07": [],
+          "module-314159-01": [],
+          "module-314159-05": [],
+          "module-314159-04": [],
+          "module-314159-00": [
+            "module-314159-01"
+          ],
+          "module-314159-06": [
+            "module-314159-05"
+          ],
+          "module-314159-02": [],
+          "module-314159-03": [
+            "module-314159-06",
+            "external-0"
+          ]
+        },
+        "expected": [
+          "external-0",
+          "module-314159-01",
+          "module-314159-00",
+          "module-314159-02",
+          "module-314159-04",
+          "module-314159-05",
+          "module-314159-06",
+          "module-314159-03",
+          "module-314159-07"
+        ]
+      },
+      {
+        "graph": {
+          "module-314159-00": [],
+          "module-314159-01": [],
+          "module-314159-07": [],
+          "module-314159-05": [
+            "module-314159-01",
+            "module-314159-00"
+          ],
+          "module-314159-03": [
+            "module-314159-07"
+          ],
+          "module-314159-06": [],
+          "module-314159-02": [],
+          "module-314159-04": [
+            "external-1"
+          ]
+        },
+        "expected": [
+          "external-1",
+          "module-314159-00",
+          "module-314159-01",
+          "module-314159-02",
+          "module-314159-04",
+          "module-314159-05",
+          "module-314159-06",
+          "module-314159-07",
+          "module-314159-03"
+        ]
+      },
+      {
+        "graph": {
+          "module-314159-03": [],
+          "module-314159-06": [
+            "module-314159-03"
+          ],
+          "module-314159-00": [
+            "module-314159-06",
+            "module-314159-03"
+          ],
+          "module-314159-07": [
+            "module-314159-06"
+          ],
+          "module-314159-01": [
+            "module-314159-03",
+            "module-314159-00"
+          ],
+          "module-314159-05": [],
+          "module-314159-02": [
+            "module-314159-03",
+            "module-314159-01",
+            "module-314159-06"
+          ],
+          "module-314159-04": [
+            "module-314159-01",
+            "module-314159-07",
+            "external-2"
+          ]
+        },
+        "expected": [
+          "external-2",
+          "module-314159-03",
+          "module-314159-05",
+          "module-314159-06",
+          "module-314159-00",
+          "module-314159-01",
+          "module-314159-02",
+          "module-314159-07",
+          "module-314159-04"
+        ]
+      },
+      {
+        "graph": {
+          "module-314159-03": [],
+          "module-314159-06": [],
+          "module-314159-01": [],
+          "module-314159-05": [
+            "module-314159-06",
+            "module-314159-01"
+          ],
+          "module-314159-00": [],
+          "module-314159-07": [
+            "module-314159-06",
+            "module-314159-00",
+            "module-314159-03"
+          ],
+          "module-314159-04": [
+            "module-314159-07",
+            "module-314159-05",
+            "module-314159-03"
+          ],
+          "module-314159-02": [
+            "external-3"
+          ]
+        },
+        "expected": [
+          "external-3",
+          "module-314159-00",
+          "module-314159-01",
+          "module-314159-02",
+          "module-314159-03",
+          "module-314159-06",
+          "module-314159-05",
+          "module-314159-07",
+          "module-314159-04"
+        ]
+      },
+      {
+        "graph": {
+          "module-314159-05": [],
+          "module-314159-03": [
+            "module-314159-05"
+          ],
+          "module-314159-06": [
+            "module-314159-05"
+          ],
+          "module-314159-04": [
+            "module-314159-03",
+            "module-314159-05",
+            "module-314159-06"
+          ],
+          "module-314159-01": [],
+          "module-314159-07": [
+            "module-314159-06",
+            "module-314159-01",
+            "module-314159-05"
+          ],
+          "module-314159-00": [],
+          "module-314159-02": [
+            "module-314159-04",
+            "module-314159-00",
+            "external-4"
+          ]
+        },
+        "expected": [
+          "external-4",
+          "module-314159-00",
+          "module-314159-01",
+          "module-314159-05",
+          "module-314159-03",
+          "module-314159-06",
+          "module-314159-04",
+          "module-314159-02",
+          "module-314159-07"
+        ]
+      },
+      {
+        "graph": {
+          "module-314159-02": [],
+          "module-314159-00": [
+            "module-314159-02"
+          ],
+          "module-314159-03": [
+            "module-314159-02"
+          ],
+          "module-314159-01": [
+            "module-314159-02"
+          ],
+          "module-314159-06": [
+            "module-314159-03",
+            "module-314159-02",
+            "module-314159-00"
+          ],
+          "module-314159-05": [
+            "module-314159-00",
+            "module-314159-01",
+            "module-314159-06"
+          ],
+          "module-314159-07": [
+            "module-314159-06",
+            "module-314159-02",
+            "module-314159-01"
+          ],
+          "module-314159-04": [
+            "module-314159-07",
+            "module-314159-02",
+            "module-314159-00",
+            "external-5"
+          ]
+        },
+        "expected": [
+          "external-5",
+          "module-314159-02",
+          "module-314159-00",
+          "module-314159-01",
+          "module-314159-03",
+          "module-314159-06",
+          "module-314159-05",
+          "module-314159-07",
+          "module-314159-04"
+        ]
+      },
+      {
+        "graph": {
+          "module-314159-01": [],
+          "module-314159-04": [
+            "module-314159-01"
+          ],
+          "module-314159-02": [
+            "module-314159-01"
+          ],
+          "module-314159-00": [],
+          "module-314159-05": [
+            "module-314159-01",
+            "module-314159-02"
+          ],
+          "module-314159-06": [],
+          "module-314159-07": [
+            "module-314159-06",
+            "module-314159-04"
+          ],
+          "module-314159-03": [
+            "module-314159-06",
+            "module-314159-05",
+            "external-6"
+          ]
+        },
+        "expected": [
+          "external-6",
+          "module-314159-00",
+          "module-314159-01",
+          "module-314159-02",
+          "module-314159-04",
+          "module-314159-05",
+          "module-314159-06",
+          "module-314159-03",
+          "module-314159-07"
+        ]
+      },
+      {
+        "graph": {
+          "module-314159-05": [],
+          "module-314159-07": [],
+          "module-314159-04": [
+            "module-314159-05"
+          ],
+          "module-314159-01": [],
+          "module-314159-00": [
+            "module-314159-04",
+            "module-314159-05"
+          ],
+          "module-314159-02": [
+            "module-314159-07"
+          ],
+          "module-314159-03": [],
+          "module-314159-06": [
+            "module-314159-01",
+            "module-314159-04",
+            "module-314159-03",
+            "external-7"
+          ]
+        },
+        "expected": [
+          "external-7",
+          "module-314159-01",
+          "module-314159-03",
+          "module-314159-05",
+          "module-314159-04",
+          "module-314159-00",
+          "module-314159-06",
+          "module-314159-07",
+          "module-314159-02"
+        ]
+      },
+      {
+        "graph": {
+          "module-314159-02": [],
+          "module-314159-04": [
+            "module-314159-02"
+          ],
+          "module-314159-06": [
+            "module-314159-02",
+            "module-314159-04"
+          ],
+          "module-314159-01": [
+            "module-314159-02"
+          ],
+          "module-314159-03": [
+            "module-314159-06",
+            "module-314159-04"
+          ],
+          "module-314159-05": [],
+          "module-314159-07": [
+            "module-314159-03",
+            "module-314159-02",
+            "module-314159-01"
+          ],
+          "module-314159-00": [
+            "module-314159-07",
+            "module-314159-01",
+            "module-314159-03",
+            "external-8"
+          ]
+        },
+        "expected": [
+          "external-8",
+          "module-314159-02",
+          "module-314159-01",
+          "module-314159-04",
+          "module-314159-05",
+          "module-314159-06",
+          "module-314159-03",
+          "module-314159-07",
+          "module-314159-00"
+        ]
+      },
+      {
+        "graph": {
+          "module-314159-02": [],
+          "module-314159-04": [
+            "module-314159-02"
+          ],
+          "module-314159-01": [],
+          "module-314159-00": [
+            "module-314159-04"
+          ],
+          "module-314159-07": [],
+          "module-314159-05": [
+            "module-314159-07",
+            "module-314159-02"
+          ],
+          "module-314159-03": [
+            "module-314159-02"
+          ],
+          "module-314159-06": [
+            "module-314159-03",
+            "module-314159-00",
+            "external-9"
+          ]
+        },
+        "expected": [
+          "external-9",
+          "module-314159-01",
+          "module-314159-02",
+          "module-314159-03",
+          "module-314159-04",
+          "module-314159-00",
+          "module-314159-06",
+          "module-314159-07",
+          "module-314159-05"
+        ]
+      },
+      {
+        "graph": {
+          "module-314159-02": [],
+          "module-314159-05": [
+            "module-314159-02"
+          ],
+          "module-314159-04": [
+            "module-314159-05"
+          ],
+          "module-314159-07": [],
+          "module-314159-06": [
+            "module-314159-05",
+            "module-314159-07"
+          ],
+          "module-314159-00": [],
+          "module-314159-01": [
+            "module-314159-07"
+          ],
+          "module-314159-03": [
+            "module-314159-02",
+            "module-314159-07",
+            "module-314159-05",
+            "external-10"
+          ]
+        },
+        "expected": [
+          "external-10",
+          "module-314159-00",
+          "module-314159-02",
+          "module-314159-05",
+          "module-314159-04",
+          "module-314159-07",
+          "module-314159-01",
+          "module-314159-03",
+          "module-314159-06"
+        ]
+      },
+      {
+        "graph": {
+          "module-314159-02": [],
+          "module-314159-07": [],
+          "module-314159-01": [
+            "module-314159-07",
+            "module-314159-02"
+          ],
+          "module-314159-04": [
+            "module-314159-07",
+            "module-314159-01"
+          ],
+          "module-314159-06": [
+            "module-314159-02"
+          ],
+          "module-314159-03": [],
+          "module-314159-05": [],
+          "module-314159-00": [
+            "module-314159-05",
+            "module-314159-06",
+            "external-11"
+          ]
+        },
+        "expected": [
+          "external-11",
+          "module-314159-02",
+          "module-314159-03",
+          "module-314159-05",
+          "module-314159-06",
+          "module-314159-00",
+          "module-314159-07",
+          "module-314159-01",
+          "module-314159-04"
+        ]
+      },
+      {
+        "graph": {
+          "module-314159-02": [],
+          "module-314159-07": [],
+          "module-314159-03": [
+            "module-314159-02",
+            "module-314159-07"
+          ],
+          "module-314159-06": [
+            "module-314159-07",
+            "module-314159-03"
+          ],
+          "module-314159-04": [
+            "module-314159-02"
+          ],
+          "module-314159-05": [
+            "module-314159-03",
+            "module-314159-04"
+          ],
+          "module-314159-00": [],
+          "module-314159-01": [
+            "module-314159-02",
+            "module-314159-04",
+            "external-12"
+          ]
+        },
+        "expected": [
+          "external-12",
+          "module-314159-00",
+          "module-314159-02",
+          "module-314159-04",
+          "module-314159-01",
+          "module-314159-07",
+          "module-314159-03",
+          "module-314159-05",
+          "module-314159-06"
+        ]
+      },
+      {
+        "graph": {
+          "module-314159-05": [],
+          "module-314159-03": [
+            "module-314159-05"
+          ],
+          "module-314159-01": [],
+          "module-314159-07": [
+            "module-314159-05",
+            "module-314159-03"
+          ],
+          "module-314159-04": [
+            "module-314159-03"
+          ],
+          "module-314159-02": [
+            "module-314159-05"
+          ],
+          "module-314159-06": [
+            "module-314159-03"
+          ],
+          "module-314159-00": [
+            "external-13"
+          ]
+        },
+        "expected": [
+          "external-13",
+          "module-314159-00",
+          "module-314159-01",
+          "module-314159-05",
+          "module-314159-02",
+          "module-314159-03",
+          "module-314159-04",
+          "module-314159-06",
+          "module-314159-07"
+        ]
+      }
+    ],
+    "public_count": 2,
+    "hidden_count": 8
+  },
+  "allowed_tools": [
+    "list_files",
+    "read_file",
+    "write_file",
+    "apply_patch",
+    "run_tests"
+  ]
+}

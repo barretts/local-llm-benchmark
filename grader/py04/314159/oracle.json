@@ -1,0 +1,402 @@
+{
+  "cases": [
+    {
+      "attempts": 2,
+      "failures": 2,
+      "delay": 0.5,
+      "calls": 2,
+      "sleeps": [
+        0.5
+      ],
+      "result": null,
+      "success": false
+    },
+    {
+      "attempts": 1,
+      "failures": 2,
+      "delay": 0.5,
+      "calls": 1,
+      "sleeps": [],
+      "result": 1,
+      "success": false
+    },
+    {
+      "attempts": 3,
+      "failures": 4,
+      "delay": 0.125,
+      "calls": 3,
+      "sleeps": [
+        0.125,
+        0.25
+      ],
+      "result": false,
+      "success": false
+    },
+    {
+      "attempts": 5,
+      "failures": 4,
+      "delay": 0,
+      "calls": 5,
+      "sleeps": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "result": false,
+      "success": true
+    },
+    {
+      "attempts": 5,
+      "failures": 4,
+      "delay": 0.125,
+      "calls": 5,
+      "sleeps": [
+        0.125,
+        0.25,
+        0.5,
+        1.0
+      ],
+      "result": false,
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 0,
+      "delay": 0.125,
+      "calls": 1,
+      "sleeps": [],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 2,
+      "delay": 2,
+      "calls": 3,
+      "sleeps": [
+        2,
+        4
+      ],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 6,
+      "failures": 5,
+      "delay": 0.125,
+      "calls": 6,
+      "sleeps": [
+        0.125,
+        0.25,
+        0.5,
+        1.0,
+        2.0
+      ],
+      "result": null,
+      "success": true
+    },
+    {
+      "attempts": 1,
+      "failures": 1,
+      "delay": 0.5,
+      "calls": 1,
+      "sleeps": [],
+      "result": 8,
+      "success": false
+    },
+    {
+      "attempts": 5,
+      "failures": 4,
+      "delay": 0.125,
+      "calls": 5,
+      "sleeps": [
+        0.125,
+        0.25,
+        0.5,
+        1.0
+      ],
+      "result": false,
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 0,
+      "delay": 0,
+      "calls": 1,
+      "sleeps": [],
+      "result": null,
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 2,
+      "delay": 0.125,
+      "calls": 3,
+      "sleeps": [
+        0.125,
+        0.25
+      ],
+      "result": 11,
+      "success": true
+    },
+    {
+      "attempts": 2,
+      "failures": 0,
+      "delay": 0.125,
+      "calls": 1,
+      "sleeps": [],
+      "result": null,
+      "success": true
+    },
+    {
+      "attempts": 6,
+      "failures": 7,
+      "delay": 0.125,
+      "calls": 6,
+      "sleeps": [
+        0.125,
+        0.25,
+        0.5,
+        1.0,
+        2.0
+      ],
+      "result": 13,
+      "success": false
+    },
+    {
+      "attempts": 4,
+      "failures": 0,
+      "delay": 0.125,
+      "calls": 1,
+      "sleeps": [],
+      "result": "ok",
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 0,
+      "delay": 0,
+      "calls": 1,
+      "sleeps": [],
+      "result": 15,
+      "success": true
+    },
+    {
+      "attempts": 4,
+      "failures": 0,
+      "delay": 0.125,
+      "calls": 1,
+      "sleeps": [],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 5,
+      "failures": 3,
+      "delay": 0.125,
+      "calls": 4,
+      "sleeps": [
+        0.125,
+        0.25,
+        0.5
+      ],
+      "result": 17,
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 0,
+      "delay": 0.5,
+      "calls": 1,
+      "sleeps": [],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 5,
+      "failures": 6,
+      "delay": 0.125,
+      "calls": 5,
+      "sleeps": [
+        0.125,
+        0.25,
+        0.5,
+        1.0
+      ],
+      "result": null,
+      "success": false
+    },
+    {
+      "attempts": 1,
+      "failures": 0,
+      "delay": 0.5,
+      "calls": 1,
+      "sleeps": [],
+      "result": "ok",
+      "success": true
+    },
+    {
+      "attempts": 6,
+      "failures": 5,
+      "delay": 0,
+      "calls": 6,
+      "sleeps": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "result": "ok",
+      "success": true
+    },
+    {
+      "attempts": 2,
+      "failures": 1,
+      "delay": 0,
+      "calls": 2,
+      "sleeps": [
+        0
+      ],
+      "result": "ok",
+      "success": true
+    },
+    {
+      "attempts": 6,
+      "failures": 6,
+      "delay": 0,
+      "calls": 6,
+      "sleeps": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "result": 23,
+      "success": false
+    },
+    {
+      "attempts": 1,
+      "failures": 0,
+      "delay": 0,
+      "calls": 1,
+      "sleeps": [],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 2,
+      "failures": 1,
+      "delay": 0,
+      "calls": 2,
+      "sleeps": [
+        0
+      ],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 1,
+      "failures": 1,
+      "delay": 0.5,
+      "calls": 1,
+      "sleeps": [],
+      "result": "ok",
+      "success": false
+    },
+    {
+      "attempts": 6,
+      "failures": 1,
+      "delay": 2,
+      "calls": 2,
+      "sleeps": [
+        2
+      ],
+      "result": "ok",
+      "success": true
+    },
+    {
+      "attempts": 2,
+      "failures": 1,
+      "delay": 0,
+      "calls": 2,
+      "sleeps": [
+        0
+      ],
+      "result": 28,
+      "success": true
+    },
+    {
+      "attempts": 5,
+      "failures": 3,
+      "delay": 0.5,
+      "calls": 4,
+      "sleeps": [
+        0.5,
+        1.0,
+        2.0
+      ],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 1,
+      "failures": 2,
+      "delay": 0,
+      "calls": 1,
+      "sleeps": [],
+      "result": 30,
+      "success": false
+    },
+    {
+      "attempts": 5,
+      "failures": 5,
+      "delay": 0.5,
+      "calls": 5,
+      "sleeps": [
+        0.5,
+        1.0,
+        2.0,
+        4.0
+      ],
+      "result": "ok",
+      "success": false
+    },
+    {
+      "attempts": 4,
+      "failures": 2,
+      "delay": 0.125,
+      "calls": 3,
+      "sleeps": [
+        0.125,
+        0.25
+      ],
+      "result": 0,
+      "success": true
+    },
+    {
+      "attempts": 2,
+      "failures": 1,
+      "delay": 0.5,
+      "calls": 2,
+      "sleeps": [
+        0.5
+      ],
+      "result": false,
+      "success": true
+    },
+    {
+      "attempts": 3,
+      "failures": 0,
+      "delay": 0.125,
+      "calls": 1,
+      "sleeps": [],
+      "result": null,
+      "success": true
+    }
+  ],
+  "public_count": 2,
+  "hidden_count": 8
+}

@@ -1,0 +1,679 @@
+{
+  "schema_version": 1,
+  "saved_at": "2026-09-18",
+  "status": "plan_only_not_executed",
+  "objective": "Reliable local coding agent with verified 65536-token context; quality gates first, lowest fresh-context first valid tool action, then high decode throughput.",
+  "paths": {
+    "project": "C:\\Users\\barrett\\local-llm-benchmark",
+    "installed_model_root": "F:\\models",
+    "new_model_root": "F:\\models\\localbench",
+    "runtime_root": "F:\\local-llm-benchmark-runtime",
+    "logs": "C:\\Users\\barrett\\local-llm-benchmark\\.logs",
+    "state": "C:\\Users\\barrett\\local-llm-benchmark\\state",
+    "artifacts": "C:\\Users\\barrett\\local-llm-benchmark\\artifacts",
+    "fixture_source": "C:\\Users\\barrett\\local-llm-benchmark\\fixtures",
+    "agent_workspaces": "C:\\Users\\barrett\\local-llm-benchmark\\workspaces",
+    "held_out_tests": "C:\\Users\\barrett\\local-llm-benchmark\\grader"
+  },
+  "observed_host": {
+    "date": "2026-09-18",
+    "os": "Windows",
+    "shell": "powershell",
+    "timezone": "America/Chicago",
+    "gpu": "NVIDIA GeForce RTX 4060 Ti",
+    "gpu_total_mib": 16380,
+    "gpu_driver": "591.86",
+    "idle_gpu_used_mib": 736,
+    "cpu": "AMD Ryzen Threadripper 1950X",
+    "physical_cores": 16,
+    "logical_processors": 32,
+    "ram_bytes": 137314222080,
+    "free_disk_bytes": {
+      "C": 216730828800,
+      "F": 611498426368,
+      "K": 2049912578048
+    },
+    "wsl_ubuntu_version": 2,
+    "wsl_ubuntu_state": "Stopped",
+    "wsl_docker_desktop_state": "Running",
+    "wsl_limits": {
+      "memory_gib": 32,
+      "processors": 16,
+      "swap_gib": 8
+    },
+    "must_reinspect": true
+  },
+  "installed_tools": {
+    "python": "C:\\Users\\barrett\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+    "python_observed_version": "3.13.15",
+    "node": "C:\\nvm4w\\nodejs\\node.exe",
+    "node_observed_version": "24.13.1",
+    "npm": "C:\\nvm4w\\nodejs\\npm.cmd",
+    "lms": "C:\\Users\\barrett\\.lmstudio\\bin\\lms.exe",
+    "ollama": "C:\\Users\\barrett\\AppData\\Local\\Programs\\Ollama\\ollama.exe",
+    "docker": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+    "wsl": "C:\\Windows\\System32\\wsl.exe",
+    "bundled_llama_server": "C:\\Users\\barrett\\.unsloth\\llama.cpp\\build\\bin\\Release\\llama-server.exe",
+    "bundled_llama_bench_exe_confirmed": false,
+    "bundled_llama_note": "Small server executable is a launcher with adjacent implementation DLLs. Do not copy it alone.",
+    "lms_models_observation": "lms ps --json returned [] but exit 1; require API health and effective config checks.",
+    "previous_secret_policy": "Do not persist or reuse the previously pasted LM Studio key. Unlogged prompt or process environment only."
+  },
+  "limits": {
+    "benchmark_elapsed_seconds": 604800,
+    "new_model_weight_bytes": 300000000000,
+    "budget_unit_note": "300 GB decimal, not 300 GiB; cumulative additional weight artifacts include new downloads, conversion inputs/outputs and extra staging copies. Resuming the same artifact does not double-count its reservation; deletion does not reset the acquisition budget.",
+    "minimum_free_f_bytes": 68719476736,
+    "minimum_free_c_bytes": 53687091200,
+    "runtime_and_build_soft_cap_bytes": 107374182400,
+    "concurrent_gpu_jobs": 1,
+    "discovery_seconds": 14400,
+    "conversion_seconds": 21600,
+    "maximum_unique_runtime_configurations": 120,
+    "maximum_new_discovery_weight_variants": 4,
+    "maximum_final_configurations": 6,
+    "maximum_fixture_turns": 16,
+    "maximum_fixture_generated_tokens": 32768,
+    "maximum_tool_output_tokens_per_turn": 2048,
+    "per_task_timeout_seconds": 900,
+    "per_64k_request_timeout_seconds": 900,
+    "per_16k_request_timeout_seconds": 300,
+    "server_start_timeout_seconds": 300,
+    "retry_transient_attempts": 2,
+    "allowed_probe_revisions_per_engine": 2,
+    "target_revision_policy": "Freeze selected commits/image digests before recording comparative results; never merge results across versions."
+  },
+  "phase_budget_hours": {
+    "discovery_downloads_probes": 24,
+    "baseline_quality": 72,
+    "tuning_engine_comparisons": 48,
+    "final_validation_reporting": 24
+  },
+  "measurement": {
+    "context_window_tokens": 65536,
+    "full_prompt_tokens": 61440,
+    "reserved_output_tokens": 4096,
+    "prompt_tokens_include": "system, tool schemas, all messages, chat template and generation prefix",
+    "prompt_target_absolute_tolerance_tokens": 64,
+    "prompt_must_not_exceed_target": true,
+    "smaller_prompt_targets": [
+      4096,
+      16384
+    ],
+    "throughput_max_output_tokens": 256,
+    "quality_long_response_max_tokens": 4096,
+    "warmup_input_tokens": 512,
+    "warmup_output_tokens": 32,
+    "fresh_repetitions_screen": 3,
+    "final_fresh_repetitions": 20,
+    "final_cached_repetitions": 20,
+    "cached_stable_prefix_tokens_target": 59392,
+    "cached_variable_suffix_tokens_target": 2048,
+    "cold_prefix_expected_cached_tokens_max": 64,
+    "cold_isolation": "Disable/reset verified prefix cache, or restart owned server for each replicate and warm it with a disjoint short prompt; fresh nonce at beginning of system content.",
+    "clock": "time.perf_counter_ns",
+    "first_stream_token": "first nonempty reasoning/content/tool-argument delta; ignore roles, heartbeats and empty deltas",
+    "first_useful_action": "first completely parsed schema-valid allowed tool call; do not count reasoning, intent prose or partial JSON",
+    "generation_token_count": "server final usage/eval_count; never SSE chunk count",
+    "report_percentiles": [
+      50,
+      95
+    ],
+    "percentile_method": "nearest rank: sorted[ceil(p*N)-1]",
+    "resource_sample_seconds": 1,
+    "shared_memory_sample_seconds": 5,
+    "aspirational_targets": {
+      "fresh_64k_first_stream_token_seconds": 10,
+      "fresh_64k_p95_first_useful_action_seconds": 15,
+      "cached_p95_first_useful_action_seconds": 2,
+      "decode_tokens_per_second": 40
+    },
+    "targets_are_not_measured_claims": true
+  },
+  "grading": {
+    "regular_fixture_ids": [
+      "py01",
+      "py02",
+      "py03",
+      "py04",
+      "py05",
+      "py06",
+      "ts01",
+      "ts02",
+      "ts03",
+      "ts04",
+      "ts05",
+      "ts06"
+    ],
+    "long_fixture_ids": [
+      "long01",
+      "long02",
+      "long03",
+      "long04"
+    ],
+    "seeds": [
+      42,
+      314159,
+      271828
+    ],
+    "regular_minimum_passes": 27,
+    "regular_total": 36,
+    "long_minimum_passes": 9,
+    "long_total": 12,
+    "capacity_marker_seeds": [
+      17,
+      101,
+      1009
+    ],
+    "capacity_all_positions_must_pass": true,
+    "fixture_pass_definition": "All public and held-out deterministic tests pass; no unauthorized edits/tools, timeout, truncation or budget violation.",
+    "early_elimination_regular_failures": 10,
+    "early_elimination_long_failures": 4,
+    "final_stability_failures_allowed": 0,
+    "final_tools_compatible_required": true,
+    "external_llm_judge_required": false,
+    "smoke_jobs": [
+      { "fixture": "py01", "seed": 42 },
+      { "fixture": "py04", "seed": 42 },
+      { "fixture": "py05", "seed": 42 },
+      { "fixture": "ts01", "seed": 42 },
+      { "fixture": "ts03", "seed": 42 },
+      { "fixture": "ts06", "seed": 42 }
+    ],
+    "ranking": [
+      "Only settings satisfying every qualification gate",
+      "Lowest 64K cold p95 time to first schema-valid tool action",
+      "If within 10 percent and 1 second, compare median decode throughput at 64K",
+      "Then lower cached p95 first action, higher fixture score, and lower peak dedicated VRAM"
+    ]
+  },
+  "default_sampling": {
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20,
+    "min_p": 0,
+    "presence_penalty": 0,
+    "repeat_penalty": 1
+  },
+  "profile_policy": "Record actually supported/effective sampler controls. Thinking default, reduced-budget and disabled are separate configurations with their own quality gates. Unsupported seeds are recorded; still run independent replicates.",
+  "sampling_profile_policy": "Initial common sampling is in default_sampling. At most one producer-recommended alternative per model may be tested when quality/support warrants; every final profile requalifies. Do not force greedy sampling on a model whose producer warns against it.",
+  "tuning": {
+    "gpu_offload": "Attempt full GPU residency first. For OOM, reduce cache/weight/batch memory, then bounded native CPU/offload alternatives.",
+    "slots_primary": 1,
+    "reduced_reasoning_probe_tokens": 256,
+    "reduced_reasoning_fallback": "Use documented low effort only if numeric budgeting is unsupported; log actual method, not a fictitious exact token cap.",
+    "flash_attention_primary": "on_when_supported",
+    "kv_pairs_primary": [
+      [
+        "f16",
+        "f16"
+      ],
+      [
+        "q8_0",
+        "q8_0"
+      ],
+      [
+        "q4_0",
+        "q4_0"
+      ]
+    ],
+    "kv_pairs_followup": [
+      [
+        "q8_0",
+        "q4_0"
+      ],
+      [
+        "q4_0",
+        "q8_0"
+      ],
+      [
+        "f16",
+        "q8_0"
+      ]
+    ],
+    "batch_ubatch_initial": [
+      [
+        512,
+        128
+      ],
+      [
+        1024,
+        256
+      ],
+      [
+        2048,
+        512
+      ],
+      [
+        2048,
+        1024
+      ],
+      [
+        4096,
+        2048
+      ]
+    ],
+    "threads_initial": [
+      8,
+      16,
+      32
+    ],
+    "speculation_default": "off",
+    "threads_batch_initial": [2, 8, 16, 32],
+    "optional_speculation": [
+      "ngram",
+      "small compatible draft",
+      "MTP",
+      "DFlash_or_DSpark_if_real_supported"
+    ],
+    "speculation_cold_p95_regression_limit_fraction": 0.1,
+    "vllm_max_num_batched_tokens": [
+      4096,
+      8192,
+      16384
+    ],
+    "linux_gpu_memory_utilization_candidates": [
+      0.8,
+      0.85,
+      0.9
+    ],
+    "experimental_kv_policy": "Use only cache pairs supported by the pinned fork and head dimension; run full long-context and coding qualification on final candidate."
+  },
+  "runtime_candidates": [
+    {
+      "id": "bundled-llama",
+      "kind": "native_gguf",
+      "priority": 1,
+      "probe_minutes": 30,
+      "source": "installed",
+      "needs": [
+        "adjacent DLLs",
+        "effective config",
+        "working tool template"
+      ]
+    },
+    {
+      "id": "upstream-llama-nightly",
+      "kind": "native_gguf",
+      "priority": 1,
+      "probe_minutes": 120,
+      "source": "https://github.com/ggml-org/llama.cpp",
+      "pin": "commit and executable SHA256",
+      "notes": "Stable release may also be tested as control; nightly is equally eligible."
+    },
+    {
+      "id": "ik-llama",
+      "kind": "native_or_container_gguf",
+      "priority": 1,
+      "probe_minutes": 120,
+      "source": "https://github.com/ikawrakow/ik_llama.cpp",
+      "pin": "commit or image digest",
+      "notes": "Use matching plain non-XL GGUF for engine comparisons. Read fork-specific flags. Native Windows or isolated CUDA container."
+    },
+    {
+      "id": "turboquant-cuda",
+      "kind": "experimental_gguf",
+      "priority": 2,
+      "probe_minutes": 120,
+      "source": "https://github.com/jarkevithwlad/llama.cpp-turboquant-cuda",
+      "alternatives": [
+        "https://github.com/x6nux/llama-cpp",
+        "https://github.com/Madreag/turbo3-cuda"
+      ],
+      "pin": "commit and local CUDA build hash",
+      "notes": "Choose one initially, another only for failed architecture support or a concrete improvement lead. Verify actual head-dimension support and Ada kernels."
+    },
+    {
+      "id": "exllamav3-tabby",
+      "kind": "exl3",
+      "priority": 2,
+      "probe_minutes": 120,
+      "source": "https://github.com/turboderp-org/exllamav3",
+      "api_source": "https://github.com/theroyallab/tabbyAPI",
+      "pin": "both commits plus package lock/image digest",
+      "notes": "Native triton-windows or WSL container. EXL3 is not EXL2. Prefer ready quant; bounded one-model conversion if needed."
+    },
+    {
+      "id": "vllm",
+      "kind": "linux_safetensors",
+      "priority": 2,
+      "probe_minutes": 120,
+      "source": "https://docs.vllm.ai/en/stable/getting_started/installation/gpu/",
+      "pin": "image digest/package lock and source revision",
+      "notes": "Test supported release then one eligible nightly if model/performance lead warrants. Format auto from checkpoint config; do not force AWQ on compressed-tensors."
+    },
+    {
+      "id": "sglang",
+      "kind": "linux_safetensors",
+      "priority": 2,
+      "probe_minutes": 120,
+      "source": "https://docs.sglang.io/docs/get-started/install",
+      "pin": "image digest/package lock and source revision",
+      "notes": "Read current model/kernel/quantization support and actual CLI. Avoid Hopper-only assumptions on Ada."
+    },
+    {
+      "id": "lm-studio",
+      "kind": "managed_gguf",
+      "priority": 3,
+      "probe_minutes": 30,
+      "source": "https://lmstudio.ai/docs/developer/rest/load",
+      "pin": "app version and backend build",
+      "notes": "Only publicly exposed load controls; instance-scoped load/unload; snapshot/restore original state."
+    },
+    {
+      "id": "ollama",
+      "kind": "managed_gguf",
+      "priority": 3,
+      "probe_minutes": 45,
+      "source": "https://docs.ollama.com/api/chat",
+      "pin": "daemon version, manifest and GGUF hash",
+      "notes": "Private daemon/local model name, native NDJSON stats, verified num_ctx. Reuse GGUF rather than downloading a duplicate."
+    }
+  ],
+  "installed_model_candidates": [
+    {
+      "id": "qwen35-9b-udq5",
+      "lms_key": "qwen3.5-9b",
+      "path": "F:\\models\\unsloth\\Qwen3.5-9B-GGUF\\Qwen3.5-9B-UD-Q5_K_XL.gguf",
+      "bytes": 6743680224,
+      "native_context_claim": 262144,
+      "priority": 1,
+      "ik_compatible_default": false
+    },
+    {
+      "id": "gemma4-12b-qat-q4",
+      "lms_key": "google/gemma-4-12b-qat@q4_0",
+      "path": "F:\\models\\lmstudio-community\\gemma-4-12B-it-QAT-GGUF\\gemma-4-12B-it-QAT-Q4_0.gguf",
+      "bytes": 6975878560,
+      "native_context_claim": 262144,
+      "priority": 1
+    },
+    {
+      "id": "gptoss20b-q4ks",
+      "lms_key": "gpt-oss-20b",
+      "path": "F:\\models\\unsloth\\gpt-oss-20b-GGUF\\gpt-oss-20b-Q4_K_S.gguf",
+      "bytes": 11618492608,
+      "native_context_claim": 131072,
+      "priority": 1
+    },
+    {
+      "id": "granite41-8b-udq4",
+      "lms_key": "granite-4.1-8b",
+      "path": "F:\\models\\unsloth\\granite-4.1-8b-GGUF\\granite-4.1-8b-UD-Q4_K_XL.gguf",
+      "native_context_claim": 131072,
+      "priority": 1,
+      "ik_compatible_default": false
+    },
+    {
+      "id": "qwen35-4b-udq5",
+      "lms_key": "qwen3.5-4b",
+      "path": "F:\\models\\unsloth\\Qwen3.5-4B-GGUF\\Qwen3.5-4B-UD-Q5_K_XL.gguf",
+      "native_context_claim": 262144,
+      "priority": 2,
+      "ik_compatible_default": false
+    },
+    {
+      "id": "ministral3-14b-reasoning-q4",
+      "lms_key": "mistralai/ministral-3-14b-reasoning@q4_k_m",
+      "path": "F:\\models\\lmstudio-community\\Ministral-3-14B-Reasoning-2512-GGUF\\Ministral-3-14B-Reasoning-2512-Q4_K_M.gguf",
+      "native_context_claim": 262144,
+      "priority": 2
+    },
+    {
+      "id": "devstral-small2-24b-q3",
+      "lms_key": "mistralai/devstral-small-2-2512@q3_k_l",
+      "path": "F:\\models\\lmstudio-community\\Devstral-Small-2-24B-Instruct-2512-GGUF\\Devstral-Small-2-24B-Instruct-2512-Q3_K_L.gguf",
+      "bytes": 12401289344,
+      "native_context_claim": 393216,
+      "priority": 2
+    },
+    {
+      "id": "qwen36-27b-iq2",
+      "lms_key": "qwen3.6-27b-i1",
+      "path": "F:\\models\\mradermacher\\Qwen3.6-27B-i1-GGUF\\Qwen3.6-27B.i1-IQ2_M.gguf",
+      "bytes": 10004592608,
+      "native_context_claim": 262144,
+      "priority": 2
+    },
+    {
+      "id": "qwen36-35ba3b-heretic-iq2",
+      "lms_key": "qwen3.6-35b-a3b-uncensored-heretic-i1",
+      "path": "F:\\models\\mradermacher\\Qwen3.6-35B-A3B-uncensored-heretic-i1-GGUF\\Qwen3.6-35B-A3B-uncensored-heretic.i1-IQ2_M.gguf",
+      "bytes": 11659236512,
+      "native_context_claim": 262144,
+      "priority": 2
+    },
+    {
+      "id": "qwen36-12b-heretic-iq4",
+      "lms_key": "qwen3.6-12b-iq-ultra-heretic-uncensored-thinking-v2-hightop",
+      "path": "F:\\models\\KevinJK51\\Qwen3.6-12B-IQ-Ultra-Heretic-Uncensored-Thinking-V2-Hightop-GGUF\\Qwen3.6-12B-IQ-IQ4_NL.gguf",
+      "bytes": 7064814848,
+      "native_context_claim": 262144,
+      "priority": 2
+    },
+    {
+      "id": "qwen35-35ba3b-autoround-q2",
+      "lms_key": "qwen3.5-35b-a3b-q2ks-mixed-autoround",
+      "path": "F:\\models\\Intel\\Qwen3.5-35B-A3B-gguf-q2ks-mixed-AutoRound\\Qwen3.5-35B-A3B-Q2_K_S.gguf",
+      "native_context_claim": 262144,
+      "priority": 2
+    },
+    {
+      "id": "nemotron3nano-4b-q6",
+      "lms_key": "nvidia/nemotron-3-nano-4b@q6_k",
+      "path": "F:\\models\\lmstudio-community\\NVIDIA-Nemotron-3-Nano-4B-GGUF\\NVIDIA-Nemotron-3-Nano-4B-Q6_K.gguf",
+      "bytes": 3933769989,
+      "native_context_claim": 1048576,
+      "priority": 3
+    },
+    {
+      "id": "gemma4-e4b-q6",
+      "lms_key": "google/gemma-4-e4b@q6_k",
+      "path": "F:\\models\\lmstudio-community\\gemma-4-E4B-it-GGUF\\gemma-4-E4B-it-Q6_K.gguf",
+      "native_context_claim": 131072,
+      "priority": 3,
+      "exllamav3_supported_claim": false
+    }
+  ],
+  "download_weights": [
+    {
+      "id": "qwen35-9b-q4-plain",
+      "priority": 1,
+      "repo": "unsloth/Qwen3.5-9B-GGUF",
+      "revision": "3885219b6810b007914f3a7950a8d1b469d598a5",
+      "filename": "Qwen3.5-9B-Q4_K_M.gguf",
+      "bytes": 5680522464,
+      "sha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+      "reason": "Same plain GGUF across upstream and ik; only download if absent from installed/cache roots."
+    },
+    {
+      "id": "ornith15-9b-q4",
+      "priority": 1,
+      "repo": "ornith-ai/Ornith-1.5-9B-GGUF",
+      "revision": "abdd624b12ebf020b767fff532ff44fe552b28c3",
+      "filename": "Ornith-1.5-9B-Q4_K_M.gguf",
+      "bytes": 5780090816,
+      "sha256": "70c112196e0b7023803c9762752e46d29e612a92c83f995bc3ba1ceb07e8fab6"
+    },
+    {
+      "id": "ornith15-9b-q6",
+      "priority": 2,
+      "repo": "ornith-ai/Ornith-1.5-9B-GGUF",
+      "revision": "abdd624b12ebf020b767fff532ff44fe552b28c3",
+      "filename": "Ornith-1.5-9B-Q6_K.gguf",
+      "bytes": 7558901696,
+      "sha256": "b6f76e74f86245b3caee014b797c10dca931c4dfdaabfb134eab655f81e4154a",
+      "reason": "Quality upgrade if q4 is near gate; memory must fit 64K."
+    },
+    {
+      "id": "qwen35-9b-q6-plain",
+      "priority": 2,
+      "repo": "unsloth/Qwen3.5-9B-GGUF",
+      "revision": "3885219b6810b007914f3a7950a8d1b469d598a5",
+      "filename": "Qwen3.5-9B-Q6_K.gguf",
+      "bytes": 7458301152,
+      "sha256": "91898433cf5ce0a8f45516a4cc3e9343b6e01d052d01f684309098c66a326c59"
+    },
+    {
+      "id": "ornith10-35b-iq2",
+      "priority": 2,
+      "repo": "unsloth/Ornith-1.0-35B-GGUF",
+      "revision": "78e1321ef86b69126dc991f481bb0cdc37614ed0",
+      "filename": "Ornith-1.0-35B-UD-IQ2_M.gguf",
+      "bytes": 11563424160,
+      "sha256": "cbc53819b386d934d50dad473d528907dbedb0d0cb4fd10961f7945e53b7e5fe",
+      "reason": "Installed HF cache may already contain weights; model version differs from 1.5."
+    },
+    {
+      "id": "qwen35-35ba3b-iq3",
+      "priority": 2,
+      "repo": "unsloth/Qwen3.5-35B-A3B-GGUF",
+      "revision": "bc014a17be43adabd7066b7a86075ff935c6a4e2",
+      "filename": "Qwen3.5-35B-A3B-UD-IQ3_S.gguf",
+      "bytes": 13583383168,
+      "sha256": "ca6e9542e9f9e34f28d59e1e335b3629825daf30a4c0b5c1ec9d2f898c061fb6"
+    },
+    {
+      "id": "qwen38-27b-iq3",
+      "priority": 2,
+      "repo": "unsloth/Qwen3.8-27B-GGUF",
+      "revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502",
+      "filename": "Qwen3.8-27B-UD-IQ3_S.gguf",
+      "bytes": 12040883104,
+      "sha256": "d847e2c1e4aa276e4b7b8e9ad7628050e61e165d49ab995407bc36677a6f3864",
+      "reason": "Dense quality comparison; watch 64K weight/cache fit and TTFT."
+    },
+    {
+      "id": "ornith15-35ba3b-q4",
+      "priority": 3,
+      "repo": "ornith-ai/Ornith-1.5-35B-A3B-GGUF",
+      "revision": "12393612fd4f730ff5aadc23e9b8f9648aa49ceb",
+      "filename": "Ornith-1.5-35B-Q4_K_M.gguf",
+      "bytes": 21713463040,
+      "sha256": "42739874cc2ccfdb8523b23fbe52e29b2a7555c8176737ca9ca0b5d59859d41f",
+      "reason": "Weight file alone exceeds VRAM. Optional partial-offload quality ceiling, never mislabeled as fully GPU resident."
+    }
+  ],
+  "linux_checkpoint_probes": [
+    {
+      "id": "qwen35-9b-int4",
+      "repo": "cyankiwi/Qwen3.5-9B-AWQ-4bit",
+      "revision": "156edc4bbeb8d1910ee7be9196bafaf1bc052156",
+      "observed_repo_bytes": 9091717583,
+      "format_note": "Read config; advertised AWQ checkpoint uses compressed-tensors representation. Auto-detect format."
+    },
+    {
+      "id": "ornith15-9b-int4",
+      "repo": "cyankiwi/Ornith-1.5-9B-AWQ-INT4",
+      "revision": "cacab98cede368fca72a795946ec26545c58bb6d",
+      "observed_repo_bytes": 9023442883,
+      "format_note": "Snapshot only config, tokenizer, template, index and index-referenced root safetensors."
+    },
+    {
+      "id": "gptoss20b-mxfp4",
+      "repo": "openai/gpt-oss-20b",
+      "revision": "6cee5e81ee83917806bbde320786a8fb61efebee",
+      "root_weight_bytes": 13761316904,
+      "root_weight_files": [
+        "model-00000-of-00002.safetensors",
+        "model-00001-of-00002.safetensors",
+        "model-00002-of-00002.safetensors"
+      ],
+      "format_note": "Three index-referenced root files despite of-00002 suffix; exclude duplicate original/ and other weight formats."
+    }
+  ],
+  "discovery_policy": {
+    "eligible_release_channels": [
+      "stable",
+      "nightly",
+      "alpha",
+      "beta",
+      "community_fork",
+      "community_quant",
+      "coding_finetune"
+    ],
+    "model_criteria": [
+      "Native/validated context >=65536",
+      "Fits GPU or plausible bounded partial-offload path",
+      "Runnable current local kernels",
+      "Tools and coding-oriented evidence",
+      "Pinned public file metadata and reproducible license/source"
+    ],
+    "search_seeds": [
+      "Ornith 1.5 EXL3 9B",
+      "Qwen3.5 9B EXL3",
+      "Qwen3.8 27B low-bit coding",
+      "Qwen coder small-active-parameter MoE 64K",
+      "CUDA TurboQuant Qwen3.5 head_dim 256",
+      "Ada fast long-context prefill vLLM SGLang ExLlamaV3"
+    ],
+    "excluded_default": [
+      "ROCm-only GPU paths",
+      "Hopper-only required kernels",
+      "Context-extension hacks without separate full validation",
+      "Huge dense weights with no plausible latency benefit",
+      "Synthetic speculative acceptance flags"
+    ],
+    "evidence_policy": "Model cards, maintainer code/docs, and real reproductions are discovery evidence. Local measured results decide ranking."
+  },
+  "private_ports": {
+    "native": 38201,
+    "ik": 38202,
+    "turboquant": 38203,
+    "tabby": 38204,
+    "vllm": 38205,
+    "sglang": 38206,
+    "ollama": 38207
+  },
+  "safety": {
+    "bind_host": "127.0.0.1",
+    "personal_repositories_out_of_scope": true,
+    "driver_changes": false,
+    "global_wsl_changes": false,
+    "clock_or_power_changes": false,
+    "global_package_changes": false,
+    "unrelated_process_termination": false,
+    "agent_shell": "Only fixed test commands through controller; no arbitrary shell",
+    "trusted_remote_code_default": false,
+    "leave_winner_running": "Only when requested or as an explicitly announced part of the execution handoff; never at plan-saving time.",
+    "credential_env": "LM_BENCH_TOKEN"
+  },
+  "previous_gemma_evidence": {
+    "date": "2026-09-18",
+    "effective_context": 49152,
+    "actual_input_tokens": 48046,
+    "runs": [
+      {
+        "physical_batch": 512,
+        "parallel_slots": 4,
+        "server_ttft_seconds": 34.787489,
+        "output_tokens_per_second": 25.7818,
+        "wall_seconds": 40.681,
+        "peak_gpu_mib": 10222
+      },
+      {
+        "physical_batch": 1024,
+        "parallel_slots": 4,
+        "server_ttft_seconds": 35.871292,
+        "output_tokens_per_second": 23.05175,
+        "wall_seconds": 41.834,
+        "peak_gpu_mib": 10543
+      },
+      {
+        "physical_batch": 2048,
+        "parallel_slots": 1,
+        "server_ttft_seconds": 35.423432,
+        "output_tokens_per_second": 24.5245,
+        "wall_seconds": 40.758,
+        "peak_gpu_mib": 10258
+      }
+    ],
+    "caveats": [
+      "Non-streaming client, reported server TTFT rather than first valid action",
+      "Different slot counts confound physical batch comparison",
+      "First run had 125 reasoning tokens out of 128 completion tokens",
+      "Not a 64K validation",
+      "Shared-memory allocation baseline does not prove active spill"
+    ]
+  }
+}

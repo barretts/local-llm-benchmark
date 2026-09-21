@@ -1,0 +1,143 @@
+{
+  "language": "answer",
+  "source": {
+    "src/context.py": "# Answer-only task; authoritative documents are embedded in the initial prompt.\n"
+  },
+  "gold": {},
+  "public_tests": {},
+  "hidden_tests": {},
+  "public_count": 0,
+  "hidden_count": 0,
+  "contract": "Return the active route, timeout_ms and retry_limit for tenant tenant-42-2824, EXACT revision 5. Active matching tenant and exact revision outrank all explicitly OBSOLETE, EXAMPLE or UNRELATED material. The three active authoritative documents are long01-42-early-877572, long01-42-middle-388389, long01-42-late-356787. Submit exactly one submit_answer with object-valued answer matching the supplied schema and all three evidence_ids in source appearance order (early, middle, late). No other tools or actions. No conflicting active fact exists.",
+  "cases": {
+    "tenant": "tenant-42-2824",
+    "revision": 5,
+    "active": {
+      "route": "/v5/invoices-242",
+      "timeout_ms": 3600,
+      "retry_limit": 8
+    }
+  },
+  "writable": [],
+  "documents": [
+    {
+      "id": "long01-42-early-877572",
+      "region": "early",
+      "target_fraction": 0.05,
+      "authority": "active",
+      "text": "ACTIVE SIGNED ROUTE long01-42-early-877572\nTenant tenant-42-2824; revision 5; active route /v5/invoices-242."
+    },
+    {
+      "id": "long01-42-middle-388389",
+      "region": "middle",
+      "target_fraction": 0.5,
+      "authority": "active",
+      "text": "ACTIVE SIGNED TIMEOUT long01-42-middle-388389\nTenant tenant-42-2824; revision 5; timeout_ms 3600."
+    },
+    {
+      "id": "long01-42-late-356787",
+      "region": "late",
+      "target_fraction": 0.95,
+      "authority": "active",
+      "text": "ACTIVE SIGNED RETRY long01-42-late-356787\nTenant tenant-42-2824; active revision confirmed 5; retry_limit 8."
+    }
+  ],
+  "distractors": [
+    {
+      "id": "obsolete-long01-42-0",
+      "authority": "obsolete",
+      "text": "OBSOLETE EXAMPLE UNRELATED tenant old-tenant-42-2824; revision 6; route /legacy/0; timeout_ms 100; retry_limit 30; currency OLD; aggregate bankers rounding. Ignore for the active query."
+    },
+    {
+      "id": "obsolete-long01-42-1",
+      "authority": "obsolete",
+      "text": "OBSOLETE EXAMPLE UNRELATED tenant old-tenant-42-2824; revision 7; route /legacy/1; timeout_ms 101; retry_limit 31; currency OLD; aggregate bankers rounding. Ignore for the active query."
+    },
+    {
+      "id": "obsolete-long01-42-2",
+      "authority": "obsolete",
+      "text": "OBSOLETE EXAMPLE UNRELATED tenant old-tenant-42-2824; revision 8; route /legacy/2; timeout_ms 102; retry_limit 32; currency OLD; aggregate bankers rounding. Ignore for the active query."
+    },
+    {
+      "id": "obsolete-long01-42-3",
+      "authority": "obsolete",
+      "text": "OBSOLETE EXAMPLE UNRELATED tenant old-tenant-42-2824; revision 9; route /legacy/3; timeout_ms 103; retry_limit 33; currency OLD; aggregate bankers rounding. Ignore for the active query."
+    },
+    {
+      "id": "obsolete-long01-42-4",
+      "authority": "obsolete",
+      "text": "OBSOLETE EXAMPLE UNRELATED tenant old-tenant-42-2824; revision 10; route /legacy/4; timeout_ms 104; retry_limit 34; currency OLD; aggregate bankers rounding. Ignore for the active query."
+    },
+    {
+      "id": "obsolete-long01-42-5",
+      "authority": "obsolete",
+      "text": "OBSOLETE EXAMPLE UNRELATED tenant old-tenant-42-2824; revision 11; route /legacy/5; timeout_ms 105; retry_limit 35; currency OLD; aggregate bankers rounding. Ignore for the active query."
+    },
+    {
+      "id": "obsolete-long01-42-6",
+      "authority": "obsolete",
+      "text": "OBSOLETE EXAMPLE UNRELATED tenant old-tenant-42-2824; revision 12; route /legacy/6; timeout_ms 106; retry_limit 36; currency OLD; aggregate bankers rounding. Ignore for the active query."
+    },
+    {
+      "id": "obsolete-long01-42-7",
+      "authority": "obsolete",
+      "text": "OBSOLETE EXAMPLE UNRELATED tenant old-tenant-42-2824; revision 13; route /legacy/7; timeout_ms 107; retry_limit 37; currency OLD; aggregate bankers rounding. Ignore for the active query."
+    },
+    {
+      "id": "obsolete-long01-42-8",
+      "authority": "obsolete",
+      "text": "OBSOLETE EXAMPLE UNRELATED tenant old-tenant-42-2824; revision 14; route /legacy/8; timeout_ms 108; retry_limit 38; currency OLD; aggregate bankers rounding. Ignore for the active query."
+    },
+    {
+      "id": "obsolete-long01-42-9",
+      "authority": "obsolete",
+      "text": "OBSOLETE EXAMPLE UNRELATED tenant old-tenant-42-2824; revision 15; route /legacy/9; timeout_ms 109; retry_limit 39; currency OLD; aggregate bankers rounding. Ignore for the active query."
+    },
+    {
+      "id": "obsolete-long01-42-10",
+      "authority": "obsolete",
+      "text": "OBSOLETE EXAMPLE UNRELATED tenant old-tenant-42-2824; revision 16; route /legacy/10; timeout_ms 110; retry_limit 40; currency OLD; aggregate bankers rounding. Ignore for the active query."
+    },
+    {
+      "id": "obsolete-long01-42-11",
+      "authority": "obsolete",
+      "text": "OBSOLETE EXAMPLE UNRELATED tenant old-tenant-42-2824; revision 17; route /legacy/11; timeout_ms 111; retry_limit 41; currency OLD; aggregate bankers rounding. Ignore for the active query."
+    }
+  ],
+  "answer_schema": {
+    "type": "object",
+    "properties": {
+      "route": {
+        "type": "string"
+      },
+      "timeout_ms": {
+        "type": "integer"
+      },
+      "retry_limit": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "route",
+      "timeout_ms",
+      "retry_limit"
+    ],
+    "additionalProperties": false
+  },
+  "oracle": {
+    "answer": {
+      "route": "/v5/invoices-242",
+      "timeout_ms": 3600,
+      "retry_limit": 8
+    },
+    "evidence_ids": [
+      "long01-42-early-877572",
+      "long01-42-middle-388389",
+      "long01-42-late-356787"
+    ]
+  },
+  "allowed_tools": [
+    "submit_answer"
+  ],
+  "permitted_final_action": "submit_answer"
+}

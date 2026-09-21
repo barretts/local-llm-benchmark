@@ -1,0 +1,19 @@
+{
+  "cases": {
+    "ttl": 50,
+    "keys": [
+      "key-42-0",
+      "key-42-1",
+      "key-42-2",
+      "key-42-3"
+    ],
+    "values": [
+      -772,
+      -949,
+      518,
+      -437
+    ]
+  },
+  "public_count": 2,
+  "hidden_count": 8
+}

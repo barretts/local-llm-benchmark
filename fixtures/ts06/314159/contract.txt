@@ -1,0 +1,16 @@
+Repair src/domain.ts, src/repository.ts and src/store.ts. Preserve Event
+{id:string;accountId:string;sequence:number;delta:number}, AccountState
+{balance:number;lastSequence:number}, Repository.read/has/transaction/
+failNextCommit, Transaction.read/has/write/markSeen, and EventStore(repo).
+apply(event):{duplicate:boolean;balance:number} and balance(accountId).
+Unknown accounts start at 0/0; reads are independent. Event ids are
+globally idempotent: a committed duplicate returns true and the payload's
+account's current balance without changes, even if payload differs.
+Duplicate handling precedes new-event validation. New sequence is exactly
+account.lastSequence+1; sequence>=1 and sequence/delta are finite safe
+integers. Negative balances are allowed. State and seen id commit
+atomically; validation/callback/commit failures roll back both.
+failNextCommit makes exactly the next attempted commit throw, and retrying
+its identical event succeeds. Each account sequences independently.
+Never retain/mutate borrowed state or event objects. transaction(fn) is
+synchronous and returns fn's result after a successful commit.

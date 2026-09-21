@@ -1,0 +1,353 @@
+{
+  "language": "python",
+  "source": {
+    "src/workers.py": "import asyncio\n\nasync def map_limited(items, worker, limit) -> list:\n    if type(limit) is not int or limit < 1:\n        raise ValueError(\"limit must be a positive integer\")\n    tasks = [asyncio.create_task(worker(item)) for item in items]\n    results = []\n    for task in asyncio.as_completed(tasks):\n        results.append(await task)\n    return results\n"
+  },
+  "gold": {
+    "src/workers.py": "import asyncio\n\nasync def map_limited(items, worker, limit) -> list:\n    if type(limit) is not int or limit < 1:\n        raise ValueError(\"limit must be a positive integer\")\n    items = list(items)\n    if not items:\n        return []\n    semaphore = asyncio.Semaphore(limit)\n    async def run(item):\n        async with semaphore:\n            return await worker(item)\n    tasks = [asyncio.create_task(run(item)) for item in items]\n    try:\n        return await asyncio.gather(*tasks)\n    except BaseException:\n        for task in tasks:\n            if not task.done():\n                task.cancel()\n        await asyncio.gather(*tasks, return_exceptions=True)\n        raise\n"
+  },
+  "public_tests": {
+    "test_public.py": "import unittest\nimport copy\nimport math\nimport asyncio\nfrom decimal import Decimal, ROUND_HALF_UP\nfrom src.workers import map_limited\nCASES = {}\n\nclass Public(unittest.IsolatedAsyncioTestCase):\n    async def test_reverse_completion_keeps_input_order(self):\n        gates = [asyncio.Event() for _ in range(3)]\n        started = set()\n        async def worker(item):\n            started.add(item)\n            await gates[item].wait()\n            return item * 10\n        task = asyncio.create_task(map_limited([0, 1, 2], worker, 3))\n        try:\n            for _ in range(20):\n                await asyncio.sleep(0)\n            self.assertEqual(started, {0, 1, 2})\n            for index in (2, 1, 0):\n                gates[index].set()\n                for _ in range(5):\n                    await asyncio.sleep(0)\n            self.assertEqual(await asyncio.wait_for(task, 3), [0, 10, 20])\n        finally:\n            for gate in gates:\n                gate.set()\n            if not task.done():\n                task.cancel()\n            await asyncio.gather(task, return_exceptions=True)\n\n    async def test_active_count_is_bounded(self):\n        gate = asyncio.Event()\n        active = 0\n        peak = 0\n        async def worker(item):\n            nonlocal active, peak\n            active += 1\n            peak = max(peak, active)\n            try:\n                await gate.wait()\n                return item\n            finally:\n                active -= 1\n        task = asyncio.create_task(map_limited(list(range(7)), worker, 2))\n        try:\n            for _ in range(30):\n                await asyncio.sleep(0)\n            self.assertLessEqual(peak, 2)\n            self.assertEqual(active, 2)\n        finally:\n            gate.set()\n            await asyncio.wait_for(asyncio.gather(task, return_exceptions=True), 3)\n\n\nif __name__ == '__main__':\n    unittest.main()\n"
+  },
+  "hidden_tests": {
+    "test_hidden.py": "import unittest\nimport copy\nimport math\nimport asyncio\nfrom decimal import Decimal, ROUND_HALF_UP\nfrom src.workers import map_limited\nCASES = [{'items': [-60, -74, 0, -88, 73, -67, -38, -98, -53, -96, 40], 'limit': 2}, {'items': [70, 47, -2, 94, -54], 'limit': 5}, {'items': [-24, -77, 27, 45, -66, 13], 'limit': 3}, {'items': [-23, -48, -53, 59, -92, -1], 'limit': 5}, {'items': [-23, 48], 'limit': 5}, {'items': [-37, 35], 'limit': 5}, {'items': [-10, 56, -44, -86, -89], 'limit': 3}, {'items': [84, 92, -2, 12], 'limit': 1}, {'items': [70, -12, 81, 81, 88, 26, -14, 31, -31, 77], 'limit': 3}, {'items': [54, -80], 'limit': 3}, {'items': [46, 47], 'limit': 1}, {'items': [-20, -25], 'limit': 3}, {'items': [33, -59, -4, -73, -84], 'limit': 3}, {'items': [-9, 24, -58, 25, 50, 73, -74, -6, 41, -63], 'limit': 2}, {'items': [75, 69, 57, 40, 78, -78, -69, 37, -54, 77, -63], 'limit': 4}]\n\nclass Hidden(unittest.IsolatedAsyncioTestCase):\n    async def test_limit_one_order_and_peak(self):\n        active, peak = 0, 0\n        async def worker(item):\n            nonlocal active, peak\n            active += 1; peak = max(peak, active)\n            try:\n                await asyncio.sleep(0)\n                return item + 1\n            finally:\n                active -= 1\n        self.assertEqual(await map_limited([3, 2, 1], worker, 1), [4, 3, 2])\n        self.assertEqual((peak, active), (1, 0))\n\n    async def test_empty_never_calls_worker(self):\n        async def worker(item):\n            self.fail(\"worker called on empty input\")\n        self.assertEqual(await map_limited([], worker, 4), [])\n\n    async def test_multiple_limits_and_seeded_inputs(self):\n        for index, case in enumerate(CASES):\n            active, peak = 0, 0\n            async def worker(item):\n                nonlocal active, peak\n                active += 1; peak = max(peak, active)\n                try:\n                    for _ in range(abs(item) % 4 + 1):\n                        await asyncio.sleep(0)\n                    return {\"value\": item * item}\n                finally:\n                    active -= 1\n            with self.subTest(index=index):\n                result = await asyncio.wait_for(map_limited(case[\"items\"], worker, case[\"limit\"]), 3)\n                self.assertEqual(result, [{\"value\": value * value} for value in case[\"items\"]])\n                self.assertLessEqual(peak, case[\"limit\"])\n                self.assertEqual(active, 0)\n\n    async def test_worker_failure_cancels_and_awaits_cleanup(self):\n        ready, blocked = asyncio.Event(), asyncio.Event()\n        running, cleaned = set(), set()\n        owned = set()\n        error = RuntimeError(\"observed failure\")\n        async def worker(item):\n            owned.add(asyncio.current_task())\n            running.add(item)\n            if item == 1:\n                ready.set()\n            try:\n                if item == 0:\n                    await ready.wait()\n                    raise error\n                await blocked.wait()\n                return item\n            finally:\n                await asyncio.sleep(0)\n                running.discard(item)\n                cleaned.add(item)\n        task = asyncio.create_task(map_limited([0, 1, 2, 3], worker, 2))\n        try:\n            with self.assertRaises(RuntimeError) as captured:\n                await asyncio.wait_for(task, 3)\n            self.assertIs(captured.exception, error)\n            self.assertEqual(running, set())\n            self.assertTrue({0, 1}.issubset(cleaned))\n            self.assertTrue(all(t.done() for t in owned))\n        finally:\n            blocked.set()\n            for owned_task in owned:\n                if not owned_task.done():\n                    owned_task.cancel()\n            await asyncio.gather(*owned, return_exceptions=True)\n\n    async def test_caller_cancellation_awaits_owned_workers(self):\n        started, blocked = asyncio.Event(), asyncio.Event()\n        running, owned = set(), set()\n        async def worker(item):\n            owned.add(asyncio.current_task())\n            running.add(item)\n            started.set()\n            try:\n                await blocked.wait()\n                return item\n            finally:\n                await asyncio.sleep(0)\n                running.discard(item)\n        task = asyncio.create_task(map_limited(list(range(5)), worker, 2))\n        try:\n            await asyncio.wait_for(started.wait(), 3)\n            for _ in range(15):\n                await asyncio.sleep(0)\n            task.cancel()\n            with self.assertRaises(asyncio.CancelledError):\n                await task\n            self.assertEqual(running, set())\n            self.assertTrue(all(t.done() for t in owned))\n        finally:\n            blocked.set()\n            for owned_task in owned:\n                if not owned_task.done():\n                    owned_task.cancel()\n            await asyncio.gather(*owned, return_exceptions=True)\n\n    async def test_blocked_release_controls_admission(self):\n        gates = [asyncio.Event() for _ in range(4)]\n        started = []\n        async def worker(item):\n            started.append(item)\n            await gates[item].wait()\n            return item\n        task = asyncio.create_task(map_limited([0, 1, 2, 3], worker, 2))\n        try:\n            for _ in range(20):\n                await asyncio.sleep(0)\n            self.assertEqual(started, [0, 1])\n            gates[1].set()\n            for _ in range(20):\n                await asyncio.sleep(0)\n            self.assertEqual(started, [0, 1, 2])\n            gates[0].set()\n            for _ in range(20):\n                await asyncio.sleep(0)\n            self.assertEqual(started, [0, 1, 2, 3])\n        finally:\n            for gate in gates:\n                gate.set()\n            result = await asyncio.wait_for(task, 3)\n        self.assertEqual(result, [0, 1, 2, 3])\n\n    async def test_invalid_limit(self):\n        async def worker(item):\n            self.fail(\"worker called for invalid limit\")\n        for limit in (0, -1, 1.5, True, \"2\", None):\n            with self.subTest(limit=limit), self.assertRaises(ValueError):\n                await map_limited([], worker, limit)\n\n    async def test_single_worker_exception_identity(self):\n        error = LookupError(\"single worker\")\n        async def worker(item):\n            raise error\n        with self.assertRaises(LookupError) as captured:\n            await map_limited([1], worker, 1)\n        self.assertIs(captured.exception, error)\n\n\nif __name__ == '__main__':\n    unittest.main()\n"
+  },
+  "public_count": 2,
+  "hidden_count": 8,
+  "contract": "Repair src/workers.py: async map_limited(items, worker, limit) -> list. limit integer >=1 or ValueError; empty returns [] without calls. At most limit workers execute at once; preserve input order. On observed worker failure or caller cancellation cancel pending/running owned tasks, await their cleanup, and propagate the exception or CancelledError. No owned worker may remain running after return/raise.",
+  "cases": [
+    {
+      "items": [
+        -60,
+        -74,
+        0,
+        -88,
+        73,
+        -67,
+        -38,
+        -98,
+        -53,
+        -96,
+        40
+      ],
+      "limit": 2
+    },
+    {
+      "items": [
+        70,
+        47,
+        -2,
+        94,
+        -54
+      ],
+      "limit": 5
+    },
+    {
+      "items": [
+        -24,
+        -77,
+        27,
+        45,
+        -66,
+        13
+      ],
+      "limit": 3
+    },
+    {
+      "items": [
+        -23,
+        -48,
+        -53,
+        59,
+        -92,
+        -1
+      ],
+      "limit": 5
+    },
+    {
+      "items": [
+        -23,
+        48
+      ],
+      "limit": 5
+    },
+    {
+      "items": [
+        -37,
+        35
+      ],
+      "limit": 5
+    },
+    {
+      "items": [
+        -10,
+        56,
+        -44,
+        -86,
+        -89
+      ],
+      "limit": 3
+    },
+    {
+      "items": [
+        84,
+        92,
+        -2,
+        12
+      ],
+      "limit": 1
+    },
+    {
+      "items": [
+        70,
+        -12,
+        81,
+        81,
+        88,
+        26,
+        -14,
+        31,
+        -31,
+        77
+      ],
+      "limit": 3
+    },
+    {
+      "items": [
+        54,
+        -80
+      ],
+      "limit": 3
+    },
+    {
+      "items": [
+        46,
+        47
+      ],
+      "limit": 1
+    },
+    {
+      "items": [
+        -20,
+        -25
+      ],
+      "limit": 3
+    },
+    {
+      "items": [
+        33,
+        -59,
+        -4,
+        -73,
+        -84
+      ],
+      "limit": 3
+    },
+    {
+      "items": [
+        -9,
+        24,
+        -58,
+        25,
+        50,
+        73,
+        -74,
+        -6,
+        41,
+        -63
+      ],
+      "limit": 2
+    },
+    {
+      "items": [
+        75,
+        69,
+        57,
+        40,
+        78,
+        -78,
+        -69,
+        37,
+        -54,
+        77,
+        -63
+      ],
+      "limit": 4
+    }
+  ],
+  "writable": [
+    "src/workers.py"
+  ],
+  "readonly": [],
+  "oracle": {
+    "cases": [
+      {
+        "items": [
+          -60,
+          -74,
+          0,
+          -88,
+          73,
+          -67,
+          -38,
+          -98,
+          -53,
+          -96,
+          40
+        ],
+        "limit": 2
+      },
+      {
+        "items": [
+          70,
+          47,
+          -2,
+          94,
+          -54
+        ],
+        "limit": 5
+      },
+      {
+        "items": [
+          -24,
+          -77,
+          27,
+          45,
+          -66,
+          13
+        ],
+        "limit": 3
+      },
+      {
+        "items": [
+          -23,
+          -48,
+          -53,
+          59,
+          -92,
+          -1
+        ],
+        "limit": 5
+      },
+      {
+        "items": [
+          -23,
+          48
+        ],
+        "limit": 5
+      },
+      {
+        "items": [
+          -37,
+          35
+        ],
+        "limit": 5
+      },
+      {
+        "items": [
+          -10,
+          56,
+          -44,
+          -86,
+          -89
+        ],
+        "limit": 3
+      },
+      {
+        "items": [
+          84,
+          92,
+          -2,
+          12
+        ],
+        "limit": 1
+      },
+      {
+        "items": [
+          70,
+          -12,
+          81,
+          81,
+          88,
+          26,
+          -14,
+          31,
+          -31,
+          77
+        ],
+        "limit": 3
+      },
+      {
+        "items": [
+          54,
+          -80
+        ],
+        "limit": 3
+      },
+      {
+        "items": [
+          46,
+          47
+        ],
+        "limit": 1
+      },
+      {
+        "items": [
+          -20,
+          -25
+        ],
+        "limit": 3
+      },
+      {
+        "items": [
+          33,
+          -59,
+          -4,
+          -73,
+          -84
+        ],
+        "limit": 3
+      },
+      {
+        "items": [
+          -9,
+          24,
+          -58,
+          25,
+          50,
+          73,
+          -74,
+          -6,
+          41,
+          -63
+        ],
+        "limit": 2
+      },
+      {
+        "items": [
+          75,
+          69,
+          57,
+          40,
+          78,
+          -78,
+          -69,
+          37,
+          -54,
+          77,
+          -63
+        ],
+        "limit": 4
+      }
+    ],
+    "public_count": 2,
+    "hidden_count": 8
+  },
+  "allowed_tools": [
+    "list_files",
+    "read_file",
+    "write_file",
+    "apply_patch",
+    "run_tests"
+  ]
+}

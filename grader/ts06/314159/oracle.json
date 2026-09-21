@@ -1,0 +1,306 @@
+{
+  "cases": {
+    "trace": [
+      {
+        "event": {
+          "id": "event-314159-0",
+          "accountId": "alpha",
+          "sequence": 1,
+          "delta": -60
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -60
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-1",
+          "accountId": "beta",
+          "sequence": 1,
+          "delta": -150
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -150
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-2",
+          "accountId": "alpha",
+          "sequence": 2,
+          "delta": 92
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": 32
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-3",
+          "accountId": "beta",
+          "sequence": 2,
+          "delta": 110
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -40
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-4",
+          "accountId": "beta",
+          "sequence": 3,
+          "delta": 61
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": 21
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-5",
+          "accountId": "alpha",
+          "sequence": 3,
+          "delta": -114
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -82
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-6",
+          "accountId": "constructor",
+          "sequence": 1,
+          "delta": 114
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": 114
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-7",
+          "accountId": "constructor",
+          "sequence": 2,
+          "delta": -183
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -69
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-8",
+          "accountId": "alpha",
+          "sequence": 4,
+          "delta": 57
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -25
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-9",
+          "accountId": "constructor",
+          "sequence": 3,
+          "delta": 102
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": 33
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-10",
+          "accountId": "alpha",
+          "sequence": 5,
+          "delta": -105
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -130
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-11",
+          "accountId": "beta",
+          "sequence": 4,
+          "delta": -199
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -178
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-12",
+          "accountId": "constructor",
+          "sequence": 4,
+          "delta": -131
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -98
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-13",
+          "accountId": "constructor",
+          "sequence": 5,
+          "delta": -67
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -165
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-14",
+          "accountId": "beta",
+          "sequence": 5,
+          "delta": -48
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -226
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-15",
+          "accountId": "beta",
+          "sequence": 6,
+          "delta": -31
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -257
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-16",
+          "accountId": "constructor",
+          "sequence": 6,
+          "delta": 81
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -84
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-17",
+          "accountId": "beta",
+          "sequence": 7,
+          "delta": -95
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -352
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-18",
+          "accountId": "alpha",
+          "sequence": 6,
+          "delta": -137
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -267
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-19",
+          "accountId": "beta",
+          "sequence": 8,
+          "delta": -66
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -418
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-20",
+          "accountId": "constructor",
+          "sequence": 7,
+          "delta": 58
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -26
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-21",
+          "accountId": "constructor",
+          "sequence": 8,
+          "delta": 115
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": 89
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-22",
+          "accountId": "alpha",
+          "sequence": 7,
+          "delta": 177
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -90
+        }
+      },
+      {
+        "event": {
+          "id": "event-314159-23",
+          "accountId": "alpha",
+          "sequence": 8,
+          "delta": -45
+        },
+        "expected": {
+          "duplicate": false,
+          "balance": -135
+        }
+      }
+    ],
+    "balances": {
+      "alpha": -135,
+      "beta": -418,
+      "constructor": 89
+    },
+    "sequences": {
+      "alpha": 8,
+      "beta": 8,
+      "constructor": 8
+    }
+  },
+  "public_count": 2,
+  "hidden_count": 10
+}

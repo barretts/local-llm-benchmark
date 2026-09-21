@@ -1,0 +1,16 @@
+{
+  "cases": {
+    "delay": 6,
+    "url": "/tenant-314159/events",
+    "key": "  event-key-314159-5501  ",
+    "statuses": [
+      503,
+      429,
+      429,
+      200
+    ],
+    "body": "response-84788"
+  },
+  "public_count": 2,
+  "hidden_count": 10
+}
