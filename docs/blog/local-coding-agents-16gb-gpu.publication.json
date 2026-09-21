@@ -1,0 +1,27 @@
+{
+  "target_site": "https://sosuke.com",
+  "publication_state": "local_draft_only",
+  "suggested_categories": [
+    "AI",
+    "LLM",
+    "Performance",
+    "Testing"
+  ],
+  "suggested_tags": [
+    "local LLM",
+    "coding agents",
+    "benchmarks",
+    "llama.cpp",
+    "quantization",
+    "MTP",
+    "DFlash"
+  ],
+  "title": "My Search for a Reliable Local Coding Agent on a 16 GB GPU",
+  "slug": "local-coding-agents-16gb-gpu",
+  "excerpt": "I tested local coding-agent configurations on a 16 GB GPU. Here are the useful picks, tool failures, memory limits, and reasons nothing qualified.",
+  "wordpress_editor": "Paste the .wordpress.html file into the WordPress block editor Code editor, then switch back to Visual editor. Enter the title separately.",
+  "rest_payload": "The .wordpress-post.json file is a draft POST payload. Category and tag IDs are intentionally omitted because site IDs have not been looked up.",
+  "report_attachment": "output/pdf/local-coding-agent-benchmark-report.pdf is available locally. Upload it separately before adding a public download link.",
+  "evidence_dates_utc": "2026-09-18 to 2026-09-21",
+  "review": "Screening samples and early-stopped coding denominators are explicitly labeled. No private repository links, machine account paths, or credentials are included in the article."
+}
